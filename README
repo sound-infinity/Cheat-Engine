@@ -1,10 +1,17 @@
+The pictures I uploaded are to show what your Cheat Engine settings should look like
+to prevent detection while scanning values/loading the script.
+
+
+
 Press Ctrl+Alt+L, or in Cheat Engine's menu, select Table --> Show Cheat Table Lua Script.
 
-Paste everything from script_executor.lua into the field.
+Paste EVERYTHING from script_executor.lua into the field.
 
 Hit Execute script.
 
-It will then load up, and now you can execute lua scripts in your chat bar LIKE SO:
+If it loads up, you will see in the Dev Console output
+a message saying "loaded"
+NOW, you can execute lua scripts in your chat bar like so:
 
 c/print("hello, world!");
 
@@ -15,4 +22,5 @@ These are examples.
 
 If you need a bypassed version of Cheat Engine to run this, consider Check Cashed, and
 if you really can't find one, DM me at Threaded#5538
+
 
