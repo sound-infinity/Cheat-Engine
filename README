@@ -7,8 +7,10 @@ This is HIGHLY IMPORTANT /\ /\ /\
 
 HOW TO USE:
 
-Press Ctrl+Alt+L, Or Ctrl+L while in Memview!!!! 
-USE `LUA ENGINE` UNDER TOOLS MENU, DONT DO OPEN CHEAT TABLE
+On Cheat Engine, Press Memory View.
+Now, Press Ctrl+Alt+L, Or Ctrl+L !!!
+OR go to Tools --> Lua Engine.
+DONT DO "OPEN CHEAT TABLE" it probably won't work running the script from there
 
 Paste EVERYTHING from script_executor.lua into the field.
 
