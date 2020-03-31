@@ -1,7 +1,11 @@
 The pictures I uploaded are to show what your Cheat Engine settings should look like
-to prevent detection
+to prevent detection as best as possible, whether you're using nopde, check cashed, or
+some other cheat engine.
+This is HIGHLY IMPORTANT /\ /\ /\
 
 
+
+HOW TO USE:
 
 Press Ctrl+Alt+L, or in Cheat Engine's menu, select Table --> Show Cheat Table Lua Script.
 
@@ -20,7 +24,7 @@ c/game.Players.LocalPlayer.Character.Head:Destroy()
 
 These are examples.
 
-If you need a bypassed version of Cheat Engine to run this, consider Check Cashed, and
-if you really can't find one, DM me at Threaded#5538
+If you need a bypassed version of Cheat Engine to run this, consider Check Cashed or NOPDE.
+I use a re-compiled version.
 
 
