@@ -112,7 +112,7 @@ end
 --
 local r_deserialize = getAddress(AOBScan("FFFFFF3F0F87????00006A04","-C-W",0,"")[0]);
 local r_spawn       = getAddress(AOBScan("83????F20F10????F20F??????FF75","-C-W",0,"")[0]);
-local r_newthread   = getAddress(AOBScan("3B????72????E8","-C-W",0,"")[0]);
+local r_newthread   = getnextprologue(getAddress(AOBScan("C746??E8010000","-C-W",0,"")[0]));
 local r_gettop      = getAddress(AOBScan("558BEC8B??088B????2B??????????5DC3","-C-W",0,"")[0]);
 local r_gettable;
 
