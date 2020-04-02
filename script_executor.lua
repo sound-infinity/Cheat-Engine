@@ -110,10 +110,9 @@ end
 -- scan for our lua functions
 -- this may rarely need to be updated
 --
-local r_lua_tthread = "8" -- type of R_LUA_TTHREAD (helps us find lua_newthread)
 local r_deserialize = getAddress(AOBScan("FFFFFF3F0F87????00006A04","-C-W",0,"")[0]);
 local r_spawn       = getAddress(AOBScan("83????F20F10????F20F??????FF75","-C-W",0,"")[0]);
-local r_newthread   = getAddress(AOBScan("C740080"..r_lua_tthread.."0000008346??10","-C-W",0,"")[1]);
+local r_newthread   = getAddress(AOBScan("3B????72????E8","-C-W",0,"")[0]);
 local r_gettop      = getAddress(AOBScan("558BEC8B??088B????2B??????????5DC3","-C-W",0,"")[0]);
 local r_gettable;
 
