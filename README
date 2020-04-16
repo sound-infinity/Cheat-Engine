@@ -5,14 +5,24 @@ This is HIGHLY IMPORTANT /\ /\ /\
 
 
 
-HOW TO USE:
+IF YOU'RE USING THE BYTECODE INJECTOR:
 
 On Cheat Engine, Press Memory View.
 Now, Press Ctrl+Alt+L, Or Ctrl+L !!!
-OR go to Tools --> Lua Engine.
-DONT DO "OPEN CHEAT TABLE" it probably won't work running the script from there
+OR simply go to Tools --> Lua Engine.
 
-Paste EVERYTHING from script_executor.lua into the field.
+Paste the script with your bytecode into the text field and hit Execute.
+
+
+
+
+IF YOU'RE USING THE SCRIPT EXECUTOR:
+
+On Cheat Engine, Press Memory View.
+Now, Press Ctrl+Alt+L, Or Ctrl+L !!!
+OR simply go to Tools --> Lua Engine.
+
+Paste EVERYTHING from script_executor.lua into the text field.
 
 Hit Execute script.
 
