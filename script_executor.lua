@@ -21,8 +21,6 @@ end
 
 writeInteger(bytecode_loc + bytecode_size + (bytecode_size + 4 % 4), bytecode_size); -- this is essential
 
-print("Bytecode size: " .. addr_to_str(bytecode_size));
-print("Bytecode: " .. addr_to_str(bytecode_loc));
 
 
 -- custom mem utility functions...
@@ -111,6 +109,11 @@ function getNextPrologue(addr)
     return func_start;
 end
 
+
+
+
+print("Bytecode size: " .. addr_to_str(bytecode_size));
+print("Bytecode: " .. addr_to_str(bytecode_loc));
 
 
 -- Search for an XREF of the string
