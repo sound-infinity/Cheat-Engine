@@ -1,11 +1,28 @@
--- open the current roblox process
---
 local pid = getProcessIDFromProcessName("RobloxPlayerBeta.exe");
 openProcess(pid);
 local base = getAddress(enumModules(pid)[1].Name);
 
 local functions = {};
 local nfunctions = 0;
+
+local url = "https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/bytecode_example.bin"
+local http = getInternet()
+local fileData = http.getURL(url)
+http.destroy()
+
+local bytecode_size = string.len(fileData);
+local bytecode_loc = allocateMemory(bytecode_size);
+local bytecode = {};
+
+for at=1,bytecode_size do
+	local i = at - 1;
+	writeBytes(bytecode_loc + i, {fileData:byte(at,at)});
+end
+
+writeInteger(bytecode_loc + bytecode_size + (bytecode_size + 4 % 4), bytecode_size); -- this is essential
+
+print("Bytecode size: " .. addr_to_str(bytecode_size));
+print("Bytecode: " .. addr_to_str(bytecode_loc));
 
 
 -- custom mem utility functions...
@@ -98,41 +115,39 @@ end
 
 -- Search for an XREF of the string
 -- "Spawn function requires 1 argument"...
--- Scanning the string's address will take us
--- to the spawn function
-local str_spawn_ref = addr_to_bytes(getAddress(AOBScan("537061776E20","-C-W",0,"")[0])); -- address of the string "Spawn " . . .
+-- since scanning the string's address will take us
+-- to the spawn function (this is how an XREF works
+-- in IDA Pro)
+-- 
+local str_spawn_ref = addr_to_bytes(getAddress(AOBScan("537061776E20","-C-W",0,"")[0])); 
+-- address of the string "Spawn " . . .
 local str_spawn_bytes = to_str(str_spawn_ref[3])..to_str(str_spawn_ref[2])..to_str(str_spawn_ref[1])..to_str(str_spawn_ref[0]);
 
--- scan for our lua functions
+-- scan for all of the addresses
 local r_spawn       = getAddress(AOBScan(str_spawn_bytes,"-C-W",0,"")[0]);
 local r_deserialize = getAddress(AOBScan("0F????83??7FD3??83??0709","-C-W",0,"")[0]);
 local r_gettop      = getAddress(AOBScan("558BEC8B??088B????2B??????????5DC3","-C-W",0,"")[0]);
-local r_gettable;
+local r_newthread   = getAddress(AOBScan("72??6A01??E8????????83C408??E8","-C-W",0,"")[0]);
 
 r_deserialize      = getPrologue(r_deserialize);
 r_spawn            = getPrologue(r_spawn);
-r_gettable         = getPrologue(r_gettop - 1);
+r_newthread        = getPrologue(r_newthread);
 
--- these calling conventions will certainly never change
--- but you can manually input them here
---
-conv_deserialize   = "cdecl";
-conv_spawn         = "cdecl";
 
 -- a place to store our function information
 -- for external function calls
 --
-local arg_data = allocateSharedMemory("arg_data", 0x1000);
+local arg_data = allocateSharedMemory(4096);
 if arg_data == nil then
     error'Failed to allocate shared memory...'
-else
-    print("lua_gettop hook: " .. addr_to_str(arg_data + 0x400))
 end
 
 local ret_location = (arg_data + 64);
+
 function getReturn()
     return readInteger(ret_location);
 end
+
 
 
 -- lua state hook
@@ -143,24 +158,34 @@ local gettop_old_bytes = readBytes(r_gettop + 6, 6, true);
 -- allocated memory for function data
 -- to place our state hooking code at
 local gettop_hook_loc = arg_data + 0x400;
+local hook_at = gettop_hook_loc;
 local trace_loc = arg_data + 0x3FC;
+
 local jmp_pointer_to = arg_data + 0x3F8;
 local jmp_pointer_back = arg_data + 0x3F4;
-bytes_jmp = addr_to_bytes(jmp_pointer_back);
 
 writeInteger(jmp_pointer_to, gettop_hook_loc);
-writeInteger(jmp_pointer_back, r_gettop);
+writeInteger(jmp_pointer_back, r_gettop + 12); -- jmpback / return
 
--- append bytes to the hook (this is sloppy xd)
-writeBytes(gettop_hook_loc,             { 0x60, 0x89, 0x0D });
-writeInteger(gettop_hook_loc + 3,       trace_loc);
-writeByte(gettop_hook_loc + 7, 	        0x61);
-writeBytes(gettop_hook_loc + 8,         gettop_old_bytes);
-writeByte(gettop_hook_loc + 14, 	{ 0xFF, 0x25, bytes_jmp[3], bytes_jmp[2], bytes_jmp[1], bytes_jmp[0] });
+writeBytes(hook_at,	{ 0x60, 0x89, 0x0D });	hook_at = hook_at + 3;
+writeInteger(hook_at, 	trace_loc);		hook_at = hook_at + 4;
+writeByte(hook_at,	0x61);			hook_at = hook_at + 1;
+writeBytes(hook_at,	gettop_old_bytes); 	hook_at = hook_at + 6;
+writeBytes(hook_at,	{ 0xFF, 0x25 }); 	hook_at = hook_at + 2;
+writeInteger(hook_at, 	jmp_pointer_back);
 
 -- insert a jmp instruction
 bytes_jmp = addr_to_bytes(jmp_pointer_to);
 local gettop_hook = { 0xFF, 0x25, bytes_jmp[3], bytes_jmp[2], bytes_jmp[1], bytes_jmp[0] };
+
+print("gettop hook: " .. addr_to_str(gettop_hook_loc))
+
+
+
+
+
+
+
 
 
 
@@ -175,7 +200,7 @@ function make_stdcall(func, convention, args)
 
     local ret = args * 4;
     nfunctions = nfunctions + 1;
-    local loc = allocateSharedMemory("func"..tostring(nfunctions), 4096)
+    local loc = allocateMemory(4096)
 
     local code = "";
     code = code .. addr_to_str(loc)..": \n";
@@ -248,7 +273,7 @@ function patch_retcheck(func_start)
     local func_size = func_end - func_start;
 
     nfunctions = nfunctions + 1;
-    local func = allocateSharedMemory("func"..tostring(nfunctions), func_size);
+    local func = allocateMemory(func_size);
     writeBytes(func, readBytes(func_start, func_size, true));
 
     for i = 1,func_size,1 do
@@ -290,41 +315,33 @@ function setargs(t)
     end
 end
 
+
+-- [[
+print("");
 print("deserializer: "..addr_to_str((r_deserialize - base) + 0x400000));
 print("spawn: "..addr_to_str((r_spawn - base) + 0x400000));
 print("lua_gettop: "..addr_to_str((r_gettop - base) + 0x400000));
+print("lua_newthread: "..addr_to_str((r_newthread - base) + 0x400000));
+-- ]]
 print("");
 
 -- update our functions to suit their calling conventions
 -- and bypass retcheck if there is a retcheck
-r_deserialize = make_stdcall(r_deserialize, conv_deserialize, 4);
-r_spawn = make_stdcall(r_spawn, conv_spawn, 1);
-r_newthread = patch_retcheck(0x121F7D0 + base - 0x400000);
+r_deserialize = make_stdcall(r_deserialize, "cdecl", 4);
+r_spawn = make_stdcall(r_spawn, "cdecl", 1);
+r_newthread = make_stdcall(patch_retcheck(r_newthread), "cdecl", 1);
 
 print("r_deserialize: "..addr_to_str(r_deserialize));
 print("r_spawn: "..addr_to_str(r_spawn));
 print("r_newthread: "..addr_to_str(r_newthread));
 
-local url = "https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/bytecode_example.bin"
-local http = getInternet()
-local fileData = http.getURL(url)
-http.destroy()
-
-local bytecode_size = string.len(fileData);
-local bytecode_loc = allocateSharedMemory("bytecode", 120000);
-local bytecode = {};
-for at=1,bytecode_size do
-	local i = at - 1;
-	writeBytes(bytecode_loc + i, {fileData:byte(at,at)});
-end
-writeInteger(bytecode_loc + bytecode_size + (bytecode_size + 4 % 4), bytecode_size); -- this is essential
-
-print(addr_to_str(bytecode_loc));
-
 local chunkName = (arg_data + 128);
 writeString(chunkName, "=Script1");
 writeInteger(chunkName + 12, 8); -- string length
 
+print("chunkName: " .. addr_to_str(chunkName));
+
+print("gettop: " .. addr_to_str(r_gettop));
 -- place the hook for gettop
 writeBytes(r_gettop + 6, gettop_hook);
 
@@ -336,16 +353,16 @@ function checkHook(timer)
         -- occur one time
         rL = readInteger(trace_loc);
         if (rL ~= 0) then
+            timer_setEnabled(t, false);
+            
             -- restore bytes
             writeBytes(r_gettop + 6, gettop_old_bytes);
-            timer_setEnabled(t, false);
 
             print("Lua state: " ..addr_to_str(rL));
 
             setargs({rL, chunkName, bytecode_loc, bytecode_size});
-            print("Args location: " .. addr_to_str(arg_data));
-            executeCode(r_deserialize, 0, 250);
-            executeCode(r_spawn, 0, 250); -- uses rL from last setargs call ...
+            executeCode(r_deserialize);
+            executeCode(r_spawn); -- uses rL from last setargs call ...
         end
     end
 end
