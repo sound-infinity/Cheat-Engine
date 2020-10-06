@@ -1,31 +1,43 @@
-The 3 uploaded images show you what your Cheat Engine settings should look like.
-This will prevent detection as much as possible, whether you're using nopde, check cashed, or
-some other cheat engine.
+The 3 uploaded images show you what your Cheat Engine (CE) settings should look like to prevent detection.
 
-If you want to use my personal bypasses cheat engine, please download the original
-from the cheat engine website (version 7.1), and then drag CeleryEngine.exe into the
-cheat engine folder and run that.
+Here's how to use my bypassed CE (CeleryEngine.exe):
+Download Cheat Engine 7.1
+Drag CeleryEngine.exe into the installed CE folder, where the
+original Cheat Engine.exe is.
+Run CeleryEngine.exe instead.
 
-It's my own cheat engine, blanketed to be undetected by ROBLOX.
+There are 3 images uploaded (jpg's) in this github.
+MAKE SURE that your cheat engine settings look as closely as
+possible to them, to reduce detection.
 
 
-SCRIPT EXECUTOR GUIDE (script_executor.lua)
+
+
+SCRIPT EXECUTOR GUIDE
 
 Open Cheat Engine.
+Hold Ctrl+Alt+L, or go to Table-->Show Cheat Table Lua Script.
+
+An alternative way is:
 Hit Memory View.
-Now, Press Ctrl+Alt+L, Or Ctrl+L.
-Or simply go to Tools --> Lua Engine
+Press Ctrl+Alt+L, Or Ctrl+L.
+Or go to Tools-->Lua Engine.
+
+
 
 Paste everything from script_executor.lua into the text field.
 
 Hit Execute script.
 
-If it loaded up properly, you will see a message in the Dev Console saying "loaded"
+If it loaded up properly, you will see a message in the Dev Console in ROBLOX
+saying "loaded"
 Now you can execute lua scripts in your chat bar, like so:
 
 c/print("hello, world!");
 
 c/game.Players.LocalPlayer.Character.Head:Destroy()
 
+
+Enjoy!
 
 
