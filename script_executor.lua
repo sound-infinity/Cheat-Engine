@@ -330,7 +330,7 @@ print("");
 
 -- update our functions to suit their calling conventions
 -- and bypass retcheck if there is a retcheck
-r_deserialize = make_stdcall(r_deserialize, "cdecl", 4);
+r_deserialize = make_stdcall(r_deserialize, "cdecl", 5);
 r_spawn = make_stdcall(r_spawn, "cdecl", 1);
 r_newthread = make_stdcall(patch_retcheck(r_newthread), "cdecl", 1);
 
@@ -363,7 +363,7 @@ function checkHook(timer)
 
             print("Lua state: " ..addr_to_str(rL));
 
-            setargs({rL, chunkName, bytecode_loc, bytecode_size});
+            setargs({rL, chunkName, bytecode_loc, bytecode_size, 0});
             executeCode(r_deserialize);
             executeCode(r_spawn); -- uses rL from last setargs call ...
         end
