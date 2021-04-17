@@ -21,13 +21,11 @@ possible to them, to reduce detection.
 SCRIPT EXECUTOR GUIDE
 
 Open Cheat Engine.
-Hold Ctrl+Alt+L, or go to Table-->Show Cheat Table Lua Script.
-
-An alternative way is:
 Hit Memory View.
 Press Ctrl+Alt+L, Or Ctrl+L.
 Or go to Tools-->Lua Engine.
 
+DO NOT RUN FROM THE CHEAT TABLE...IF THE BUTTON SAYS "EXECUTE SCRIPT" UR AT THE WRONG THING.
 
 
 Paste everything from script_executor.lua into the text field.
