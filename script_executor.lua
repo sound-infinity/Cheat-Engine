@@ -37,7 +37,7 @@ scan_spawn = scan_spawn..util.byte_to_str(refb[0]);
 
 local r_spawn       = util.get_prologue(util.aobscan(scan_spawn)[1]);
 local r_deserialize = util.get_prologue(util.aobscan("0F????83??7FD3??83??0709")[1]);
-local r_newthread   = util.get_prologue(util.aobscan("68280A00006A006A006A006A00E8")[1]) - 0x30;
+local r_newthread   = util.get_prologue(util.aobscan("68280A00006A006A006A006A00E8")[1] - 0x30);
 --local r_newthread = util.get_prologue(util.aobscan("88????E8????????0F1046??0F11????")[1]);
 local ls_hook_from  = util.get_prologue(util.aobscan("73????FF??8B??83C404")[1]);
 
@@ -84,7 +84,7 @@ function patch_retcheck(func_start)
     for i = 1,func_size,1 do
         local at = newfunc + i;
         if (util.read_byte(at) == 0x72 and util.read_byte(at + 2) == 0xA1 and util.read_byte(at + 7) == 0x8B) then
-            writeByte(at, 0xEB);
+            writeBytes(at, {0xEB});
             print("Patched retcheck at "..util.int_to_str(at))
             i = i + 16;
         end
@@ -156,7 +156,7 @@ function checkHook(timer)
             -- restore lua state hook bytes
             writeBytes(ls_hook_from, { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08 });
 
-            rL = util.fremote.call(r_newthread, {rL}).ret32;
+            --rL = util.fremote.call(r_newthread, {rL}).ret32;
             print("Lua state: " ..util.int_to_str(rL));
 
             util.fremote.call(r_deserialize, {rL, chunk_name, bytecode, bytecode_size, 0});
