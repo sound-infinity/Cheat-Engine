@@ -82,11 +82,11 @@ util.int_to_str = function(x)
 end
 
 util.is_prologue = function(address)
-return    (address % 16 == 0) and
-         ((util.read_byte(address) == 0x55 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xEC) -- push ebp | mov ebp,esp
-       or (util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDC) -- push ebx | mov ebx,esp
-       or (util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDA) -- push ebx | mov ebx,edx
-         );
+local pr = ((util.read_byte(address) == 0x55 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xEC) -- push ebp | mov ebp,esp
+         or (util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDC) -- push ebx | mov ebx,esp
+         or (util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDA) -- push ebx | mov ebx,edx
+);
+return pr and (address % 16 == 0);
 end
 
 util.get_prologue = function(address)
@@ -228,9 +228,9 @@ util.fremote.call = function(x, t)
     if t ~= nil then
         util.fremote.set_args(t);
     end
-    
+
     executeCode(x);
-    
+
     local r = {};
     r.ret32 = readInteger(util.fremote.ret32_location);
     r.ret64 = readQword(util.fremote.ret64_location);
