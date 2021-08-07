@@ -70,7 +70,7 @@ util.int_to_bytes = function(x)
 end
 
 util.int_to_str = function(x)
-    if addr == nil then
+    if x == nil then
         error'Cannot convert nil value to hex string'
     end
     local str = "";
@@ -140,7 +140,7 @@ util.fremote.add = function(func, convention, args)
     local arg_data = util.fremote.args_location;
 
     local code = "";
-    code = code .. addr_to_str(loc)..": \n";
+    code = code .. util.int_to_str(loc)..": \n";
     code = code .. "push ebp \n";
     code = code .. "mov ebp,esp \n";
     code = code .. "push eax \n";
