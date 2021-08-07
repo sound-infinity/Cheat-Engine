@@ -5,16 +5,16 @@ util.init = function(pid)
     util.base = getAddress(enumModules(pid)[1].Name);
 end
 
-util.rebase = function(x)
-    return util.base + x;
+util.rebase = function(address)
+    return util.base + address;
 end
 
-util.aslr = function(x)
-    return util.base + (x - 0x400000);
+util.aslr = function(address)
+    return util.base + (address - 0x400000);
 end
 
-util.raslr = function(x)
-    return (x - util.base) + 0x400000;
+util.raslr = function(address)
+    return (address - util.base) + 0x400000;
 end
 
 util.read_byte = function(address)
@@ -34,7 +34,7 @@ util.str_to_byte = function(s)
     if (string.len(s) ~= 2) then
         return b;
     end
-    if (s:sub(1,1) == '?' and s:sub(2,2) == '?') then
+    if (s:sub(1,2) == "??") then
         return b;
     end
     for i = 1, 2, 1 do
