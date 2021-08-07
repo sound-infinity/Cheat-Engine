@@ -180,8 +180,8 @@ util.fremote.add = function(func, convention, args)
 
     -- insert the call
     code = code .. "call "..util.int_to_str(func).." \n"
-    code = code .. "mov ["..util.int_to_str(ret32_location).."],eax \n";
-    code = code .. "movss ["..util.int_to_str(ret64_location).."],xmm0 \n";
+    code = code .. "mov ["..util.int_to_str(util.fremote.ret32_location).."],eax \n";
+    code = code .. "movss ["..util.int_to_str(util.fremote.ret64_location).."],xmm0 \n";
 
     if (convention == "cdecl") then
         if (args > 0) then
