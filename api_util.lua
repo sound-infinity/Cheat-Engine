@@ -49,7 +49,7 @@ util.str_to_byte = function(s)
             n = c - 0x30;
         end
 
-        if (i == 2) then
+        if (i == 1) then
             b = b + (n * 16);
         else
             b = b + n;
