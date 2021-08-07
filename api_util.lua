@@ -1,17 +1,20 @@
 local util = {};
+util.base = 0;
 
-util.base = getAddress(enumModules(pid)[1].Name);
+util.init = function(pid)
+    util.base = getAddress(enumModules(pid)[1].Name);
+end
 
 util.rebase = function(x)
-    return base + x;
+    return util.base + x;
 end
 
 util.aslr = function(x)
-    return base + (x - 0x400000);
+    return util.base + (x - 0x400000);
 end
 
 util.raslr = function(x)
-    return (x - base) + 0x400000;
+    return (x - util.base) + 0x400000;
 end
 
 util.read_byte = function(address)
@@ -37,7 +40,7 @@ util.str_to_byte = function(s)
     for i = 1, 2, 1 do
         local c = s:byte(i,i);
         local n = 0;
-        
+
         if (c >= 0x61) then
             n = c - 0x57;
         elseif (c >= 0x41) then
@@ -45,7 +48,7 @@ util.str_to_byte = function(s)
         elseif (c >= 0x30) then
             n = c - 0x30;
         end
-        
+
         if (i == 2) then
             b = b + (n * 16);
         else
@@ -81,8 +84,8 @@ end
 util.is_prologue = function(address)
 return    (x % 16 == 0) and
          ((util.read_byte(address) == 0x55 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xEC) -- push ebp | mov ebp,esp
-       or util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDC) -- push ebx | mov ebx,esp
-       or util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDA) -- push ebx | mov ebx,edx
+       or (util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDC) -- push ebx | mov ebx,esp
+       or (util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDA) -- push ebx | mov ebx,edx
          );
 end
 
@@ -107,11 +110,11 @@ end
 util.aobscan = function(aob)
     local results = AOBScan(aob,"-C-W",0,"")
     local new_results = {};
-    
+
     for i = 0,#results do
         table.insert(new_results, getAddress(results[i]));
     end
-    
+
     return new_results;
 end
 
@@ -130,7 +133,7 @@ end
 
 -- injects a stub which is able to be called
 -- using cheat engine's `executeCode` function
--- 
+--
 util.fremote.add = function(func, convention, args)
     local ret = args * 4;
     local loc = allocateMemory(1024)
@@ -174,7 +177,7 @@ util.fremote.add = function(func, convention, args)
             ret = ret - 4;
         end
     end
-    
+
     -- insert the call
     code = code .. "call "..util.int_to_str(func).." \n"
     code = code .. "mov ["..util.int_to_str(ret32_location).."],eax \n";
@@ -214,7 +217,7 @@ end
 util.fremote.set_args = function(t)
     local args_at = 0
     local arg_data = util.fremote.args_location;
-    
+
     for i = 1,#t do
         writeInteger(arg_data + args_at, t[i]);
         args_at = args_at + 4;
@@ -225,9 +228,9 @@ util.fremote.call = function(x, t)
     if t ~= nil then
         util.fremote.setargs(t);
     end
-    
+
     executeCode(x);
-    
+
     local r = {};
     r.ret32 = readInteger(util.fremote.ret32_location);
     r.ret64 = readQword(util.fremote.ret64_location);
