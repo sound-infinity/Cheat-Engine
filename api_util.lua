@@ -230,7 +230,7 @@ util.fremote.call = function(x, t)
     end
     
     executeCode(x);
-
+    
     local r = {};
     r.ret32 = readInteger(util.fremote.ret32_location);
     r.ret64 = readQword(util.fremote.ret64_location);
