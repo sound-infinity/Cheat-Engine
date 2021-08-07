@@ -116,10 +116,17 @@ util.aobscan = function(aob)
 end
 
 util.fremote = {};
-util.fremote.data = allocateMemory(1024);
-util.fremote.args_location = util.fremote.data + 0x10;
-util.fremote.ret32_location = util.fremote.data + 0xC;
-util.fremote.ret64_location = util.fremote.data + 0x4;
+util.fremote.data = 0;
+util.fremote.args_location = 0;
+util.fremote.ret32_location = 0;
+util.fremote.ret64_location = 0;
+
+util.fremote.init = function()
+    util.fremote.data = allocateMemory(1024);
+    util.fremote.args_location = util.fremote.data + 0x10;
+    util.fremote.ret32_location = util.fremote.data + 0xC;
+    util.fremote.ret64_location = util.fremote.data + 0x4;
+end
 
 -- injects a stub which is able to be called
 -- using cheat engine's `executeCode` function
@@ -226,5 +233,12 @@ util.fremote.call = function(x, t)
     r.ret64 = readQword(util.fremote.ret64_location);
     return r;
 end
+
+
+
+
+
+
+
 
 
