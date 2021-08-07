@@ -226,7 +226,7 @@ end
 
 util.fremote.call = function(x, t)
     if t ~= nil then
-        util.fremote.setargs(t);
+        util.fremote.set_args(t);
     end
 
     executeCode(x);
