@@ -1,4 +1,4 @@
-local util = {};
+util = {};
 util.base = 0;
 
 util.init = function(pid)
