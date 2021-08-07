@@ -80,16 +80,16 @@ end
 
 util.is_prologue = function(address)
 return    (x % 16 == 0) and
-         ((readByte(address) == 0x55 and readByte(address + 1) == 0x8B and readByte(address + 2) == 0xEC) -- push ebp | mov ebp,esp
-       or (readByte(address) == 0x53 and readByte(address + 1) == 0x8B and readByte(address + 2) == 0xDC) -- push ebx | mov ebx,esp
-       or (readByte(address) == 0x53 and readByte(address + 1) == 0x8B and readByte(address + 2) == 0xDA) -- push ebx | mov ebx,edx
+         ((util.read_byte(address) == 0x55 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xEC) -- push ebp | mov ebp,esp
+       or util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDC) -- push ebx | mov ebx,esp
+       or util.read_byte(address) == 0x53 and util.read_byte(address + 1) == 0x8B and util.read_byte(address + 2) == 0xDA) -- push ebx | mov ebx,edx
          );
 end
 
 util.get_prologue = function(address)
     local func_start = address;
     func_start = func_start - (func_start % 16);
-    while not (isPrologue(func_start)) do
+    while not (util.is_prologue(func_start)) do
         func_start = func_start - 16;
     end
     return func_start;
@@ -98,7 +98,7 @@ end
 util.next_prologue = function(address)
     local func_start = address;
     func_start = func_start + (func_start % 0x10);
-    while not (isPrologue(func_start)) do
+    while not (util.is_prologue(func_start)) do
         func_start = func_start + 16;
     end
     return func_start;
