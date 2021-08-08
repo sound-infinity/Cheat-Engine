@@ -5,7 +5,7 @@ util.init = function(pid)
     util.base = getAddress(enumModules(pid)[1].Name);
 end
 
-util.rebase = function(address)
+util.rebase = function(address) 
     return util.base + address;
 end
 
