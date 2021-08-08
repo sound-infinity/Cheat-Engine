@@ -5,7 +5,8 @@ Hit Memory View.
 Press Ctrl+Alt+L, Or Ctrl+L.
 Or go to Tools-->Lua Engine.
 
-DO NOT RUN FROM THE CHEAT TABLE...IF THE BUTTON SAYS "EXECUTE SCRIPT" UR AT THE WRONG THING.
+DO NOT RUN FROM THE CHEAT TABLE...IF THE BUTTON SAYS "Execute Script" UR AT THE WRONG THING.
+It should only say "Execute"
 
 
 Paste everything from script_executor.lua into the text field.
