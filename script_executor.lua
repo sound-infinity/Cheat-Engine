@@ -74,46 +74,58 @@ writeBytes(ls_hook_to,{
 print("ls_hook: "    .. util.int_to_str(ls_hook_to));
 
 
-function patch_retcheck(func_start)
+
+local retcheck = {};
+retcheck.routine = 0;
+retcheck.pointer = 0;
+
+retcheck.load = function()
+    retcheck.routine = util.aobscan("5DFF25????????CC")[1] + 1;
+    retcheck.pointer = readInteger(retcheck.routine + 2);
+end
+
+retcheck.load();
+
+retcheck.patch = function(address)
+    local func_start = address;
     local func_end = util.next_prologue(func_start + 16);
     local func_size = func_end - func_start;
-    local newfunc = allocateMemory(func_size);
+    
+    local mod = allocateMemory(1024);
+    local loc_prev_eip = mod + 0x200;
+    local ptr_start = mod + 0x204;
+    
 
-    writeBytes(newfunc, util.read_bytes(func_start, func_size));
-
-    for i = 1,func_size,1 do
-        local at = newfunc + i;
-        if (util.read_byte(at) == 0x72 and util.read_byte(at + 2) == 0xA1 and util.read_byte(at + 7) == 0x8B) 
-        or (util.read_byte(at) == 0x72 and util.read_byte(at + 2) == 0x8B and util.read_byte(at + 7) == 0x8B) then
-            writeBytes(at, {0xEB});
-            print("Patched retcheck at "..util.int_to_str(at))
-            i = i + 9;
-        end
-    end
-
-    local i = 1;
-
-    while (i < func_size) do
-        local at = func_start + i;
-
-        -- fix relative calls
-        if (util.read_byte(newfunc + i) == 0xE8 or util.read_byte(newfunc + i) == 0xE9) then
-            -- get the function address being called in
-            -- the original function
-            local calledfunc = (func_start + i + 5) + readInteger(func_start + i + 1);
-
-            if (calledfunc % 16 == 0) then
-                -- update the call in our new function
-                writeInteger(newfunc + i + 1, calledfunc - (newfunc + i + 5));
-
-                i = i + 4;
-            end
-        end
-
-        i = i + 1;
-    end
-
-    return newfunc;
+    print("retcheck patch: " .. util.int_to_str(mod));
+    
+    local has_prologue = true; -- assume it is not naked func
+    local prologue_reg = util.read_byte(func_start) % 8;
+    func_start = func_start + 3;
+    writeInteger(ptr_start, func_start);
+    
+    local b1 = util.int_to_bytes(loc_prev_eip);
+    local b2 = util.int_to_bytes(retcheck.routine);
+    local b3 = util.int_to_bytes(mod + 0x25);
+    local b4 = util.int_to_bytes(retcheck.pointer);
+    local b5 = util.int_to_bytes(ptr_start);
+    
+    local patch_bytes = {
+        0x50 + prologue_reg,			-- push ebp
+        0x8B, 0xC4 + (prologue_reg * 8), 	-- mov ebp,esp
+	0x50, 					-- push eax
+	0x8B, 0x40 + prologue_reg, 0x04,	-- mov eax,[ebp+4]
+	0xA3, b1[3], b1[2], b1[1], b1[0],	-- mov [prev_eip],eax
+	0xB8, b2[3], b2[2], b2[1], b2[0],	-- mov eax, retcheck.routine
+	0x89, 0x40 + prologue_reg, 0x04,	-- mov [ebp+4], eax
+	0xB8, b3[3], b3[2], b3[1], b3[0],	-- mov eax, (mod + 0x25)
+	0xA3, b4[3], b4[2], b4[1], b4[0],	-- mov [retcheck.pointer], eax
+	0x58,					-- pop eax
+	0xFF, 0x25, b5[3], b5[2], b5[1], b5[0],	-- jmp dword ptr [->func_start]
+	0xFF, 0x25, b1[3], b1[2], b1[1], b1[0] 	-- jmp dword ptr [previous eip]
+    }
+    
+    writeBytes(mod, patch_bytes);
+    return mod;
 end
 
 
@@ -124,8 +136,8 @@ print("loading functions");
 
 -- update our functions to a standard __stdcall
 --
-r_deserialize   = util.fremote.add(patch_retcheck(r_deserialize), "fastcall", 5);
-r_spawn         = util.fremote.add(patch_retcheck(r_spawn), "cdecl", 1);
+r_deserialize   = util.fremote.add(retcheck.patch(r_deserialize), "fastcall", 5);
+r_spawn         = util.fremote.add(retcheck.patch(r_spawn), "cdecl", 1);
 r_newthread     = util.fremote.add(r_newthread, "thiscall", 1);
 
 print("new deserialize: "  .. util.int_to_str(r_deserialize));
