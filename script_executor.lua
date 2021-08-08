@@ -17,34 +17,30 @@ http.destroy()
 
 local bytecode_size = string.len(bytecode_fetch);
 local bytecode = allocateMemory(bytecode_size);
+
 for at = 1, bytecode_size do
 	local i = at - 1;
 	writeBytes(bytecode + i, {bytecode_fetch:byte(at,at)});
 end
 
-writeInteger(bytecode + bytecode_size + (bytecode_size + 4 % 4), bytecode_size);
+writeInteger(bytecode + bytecode_size + 4 + (bytecode_size % 4), bytecode_size);
+
 
 print(util.int_to_str(bytecode))
 print(util.int_to_str(bytecode_size))
 
 
 
-refb = util.int_to_bytes(util.aobscan("537061776E20")[1]);
-scan_spawn = util.byte_to_str(refb[3]);
-scan_spawn = scan_spawn..util.byte_to_str(refb[2]);
-scan_spawn = scan_spawn..util.byte_to_str(refb[1]);
-scan_spawn = scan_spawn..util.byte_to_str(refb[0]);
-
-local r_spawn       = util.get_prologue(util.aobscan(scan_spawn)[1]);
-local r_deserialize = util.get_prologue(util.aobscan("0F????83??7FD3??83??0709")[1]);
-local r_newthread   = util.get_prologue(util.aobscan("68280A00006A006A006A006A00E8")[1] - 0x30);
---local r_newthread = util.get_prologue(util.aobscan("88????E8????????0F1046??0F11????")[1]);
-local ls_hook_from  = util.get_prologue(util.aobscan("73????FF??8B??83C404")[1]);
+local rluab_pcall       = util.get_prologue(util.aobscan("8B????3B????0F83????????81??????????0F84")[1]); -- 8B????3B????0F83????????81
+local rluau_loadbuffer  = util.get_prologue(util.aobscan("0F????83??7FD3??83??0709")[1]);
+local rluae_newthread   = util.get_prologue(util.aobscan("68280A00006A006A006A006A00E8")[1] - 0x30);
+--local rluae_newthread = util.get_prologue(util.aobscan("88????E8????????0F1046??0F11????")[1]);
+local ls_hook_from      = util.get_prologue(util.aobscan("73????FF??8B??83C404")[1]);
 
 
-print("deserialize: "  .. util.int_to_str(r_deserialize));
-print("spawn: "        .. util.int_to_str(r_spawn));
-print("newthread: "    .. util.int_to_str(r_newthread));
+print("deserialize: "  .. util.int_to_str(rluau_loadbuffer));
+print("spawn: "        .. util.int_to_str(rluab_pcall));
+print("newthread: "    .. util.int_to_str(rluae_newthread));
 
 
 
@@ -71,8 +67,6 @@ writeBytes(ls_hook_to,{
     0xFF, 0x25, b2[3], b2[2], b2[1], b2[0]
 });
 
-print("ls_hook: "    .. util.int_to_str(ls_hook_to));
-
 
 
 local retcheck = {};
@@ -94,9 +88,6 @@ retcheck.patch = function(address)
     local mod = allocateMemory(1024);
     local loc_prev_eip = mod + 0x200;
     local ptr_start = mod + 0x204;
-
-
-    print("retcheck patch: " .. util.int_to_str(mod));
 
     local has_prologue = true; -- assume it is not naked func
     local prologue_reg = util.read_byte(func_start) % 8;
@@ -136,13 +127,13 @@ print("loading functions");
 
 -- update our functions to a standard __stdcall
 --
-r_deserialize   = util.fremote.add(retcheck.patch(r_deserialize), "fastcall", 5);
-r_spawn         = util.fremote.add(retcheck.patch(r_spawn), "cdecl", 1);
-r_newthread     = util.fremote.add(r_newthread, "thiscall", 1);
+rluau_loadbuffer = util.fremote.add(retcheck.patch(rluau_loadbuffer), "fastcall", 5);
+rluab_pcall = util.fremote.add(retcheck.patch(rluab_pcall), "cdecl", 1);
+rluae_newthread = util.fremote.add(rluae_newthread, "thiscall", 1);
 
-print("new deserialize: "  .. util.int_to_str(r_deserialize));
-print("new spawn: "        .. util.int_to_str(r_spawn));
-print("new newthread: "    .. util.int_to_str(r_newthread));
+print("new deserialize: "  .. util.int_to_str(rluau_loadbuffer));
+print("new spawn: "        .. util.int_to_str(rluab_pcall));
+print("new newthread: "    .. util.int_to_str(rluae_newthread));
 
 
 local chunk_name = ls_hook_to - 0x40; -- use existing memory
@@ -169,12 +160,12 @@ function checkHook(timer)
             -- restore lua state hook bytes
             writeBytes(ls_hook_from, { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08 });
 
-            rL = util.fremote.call(r_newthread, { rL }).ret32;
+            rL = util.fremote.call(rluae_newthread, { rL }).ret32;
             print("Lua state: " ..util.int_to_str(rL));
 
-            local status = util.fremote.call(r_deserialize, { rL, chunk_name, bytecode, bytecode_size, 0 }).ret32;
+            local status = util.fremote.call(rluau_loadbuffer, { rL, chunk_name, bytecode, bytecode_size, 0 }).ret32;
             if (status == 0) then
-                util.fremote.call(r_spawn, { rL });
+                util.fremote.call(rluab_pcall, { rL });
             else
                 print("Bytecode error")
             end
