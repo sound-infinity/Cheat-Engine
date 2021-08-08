@@ -83,10 +83,11 @@ function patch_retcheck(func_start)
 
     for i = 1,func_size,1 do
         local at = newfunc + i;
-        if (util.read_byte(at) == 0x72 and util.read_byte(at + 2) == 0xA1 and util.read_byte(at + 7) == 0x8B) then
+        if (util.read_byte(at) == 0x72 and util.read_byte(at + 2) == 0xA1 and util.read_byte(at + 7) == 0x8B) 
+        or (util.read_byte(at) == 0x72 and util.read_byte(at + 2) == 0x8B and util.read_byte(at + 7) == 0x8B) then
             writeBytes(at, {0xEB});
             print("Patched retcheck at "..util.int_to_str(at))
-            i = i + 16;
+            i = i + 9;
         end
     end
 
@@ -101,7 +102,7 @@ function patch_retcheck(func_start)
             -- the original function
             local calledfunc = (func_start + i + 5) + readInteger(func_start + i + 1);
 
-            if ((calledfunc % 16 == 0) and calledfunc > util.base and calledfunc < util.base + 0x3A00000) then
+            if (calledfunc % 16 == 0) then
                 -- update the call in our new function
                 writeInteger(newfunc + i + 1, calledfunc - (newfunc + i + 5));
 
@@ -123,7 +124,7 @@ print("loading functions");
 
 -- update our functions to a standard __stdcall
 --
-r_deserialize   = util.fremote.add(r_deserialize, "fastcall", 5);
+r_deserialize   = util.fremote.add(patch_retcheck(r_deserialize), "fastcall", 5);
 r_spawn         = util.fremote.add(patch_retcheck(r_spawn), "cdecl", 1);
 r_newthread     = util.fremote.add(r_newthread, "thiscall", 1);
 
