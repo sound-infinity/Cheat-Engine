@@ -11,16 +11,17 @@ It should only say "Execute"
 
 Paste everything from script_executor.lua into the text field.
 
-Hit Execute script.
+Hit "Execute".
 
 If it loaded up properly, you will see a message in the Dev Console in ROBLOX
-saying "loaded"
+saying "Loaded"
 Now you can execute lua scripts in your chat bar, like so:
 
 c/print("hello, world!");
 
 c/game.Players.LocalPlayer.Character.Head:Destroy()
 
+...
 
 
 # ISSUES
