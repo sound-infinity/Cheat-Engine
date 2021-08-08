@@ -1,4 +1,4 @@
-SCRIPT EXECUTOR GUIDE
+# SCRIPT EXECUTOR GUIDE
 
 Open Cheat Engine.
 Hit Memory View.
@@ -22,11 +22,14 @@ c/game.Players.LocalPlayer.Character.Head:Destroy()
 
 
 
+# ISSUES
 
-P.S. If you're getting kicked at all for using cheat engine, change your cheat engine settings 
+If you're getting kicked at all for using cheat engine, change your cheat engine settings 
 to match the 3 screenshots I uploaded here.
 Make sure they're as close as possible to the pictures.
 And DONT use 'Open Cheat Table' for executing lua scripts
+
+
 
 That is all.
 
