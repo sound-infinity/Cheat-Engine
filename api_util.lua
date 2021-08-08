@@ -144,36 +144,39 @@ util.fremote.add = function(func, convention, args)
     code = code .. "push ebp \n";
     code = code .. "mov ebp,esp \n";
     code = code .. "push eax \n";
+    code = code .. "push esi \n";
 
     if (convention == "cdecl" or convention == "stdcall") then
         for i=args,1,-1 do
-            code = code .. "push ["..util.int_to_str(arg_data+((i-1)*4)).."] \n"
+            code = code .. "push [" ..util.int_to_str(arg_data+((i-1)*4)).. "] \n"
 	end
     elseif (convention == "thiscall") then
         if (args > 1) then
             for i=args,2,-1 do
-                code = code .. "push ["..util.int_to_str(arg_data+((i-1)*4)).."] \n"
+                code = code .. "push [" ..util.int_to_str(arg_data+((i-1)*4)).. "] \n"
 	    end
         end
         if (args > 0) then
             code = code .. "push ecx \n";
-            code = code .. "mov ecx,["..util.int_to_str(arg_data+0).."] \n"
+            code = code .. "mov ecx,[" ..util.int_to_str(arg_data+0).. "] \n"
             ret = ret - 4;
         end
     elseif (convention == "fastcall") then
        	if (args > 2) then
             for i=args,3,-1 do
-                code = code .. "push ["..util.int_to_str(arg_data+((i-1)*4)).."] \n"
-	    end
+                code = code .. "push [" ..util.int_to_str(arg_data+((i-1)*4)).. "] \n"
+            end
+	    code = code .. "mov esi," ..util.int_to_str(arg_data + 0).. "] \n";
+	    code = code .. "mov eax," ..util.int_to_str(arg_data + 8).. "] \n";
         end
 	if (args > 1) then
             code = code .. "push edx \n";
-            code = code .. "mov edx,["..util.int_to_str(arg_data+4).."] \n"
+            code = code .. "mov edx,[" ..util.int_to_str(arg_data + 4).. "] \n"
             ret = ret - 4;
         end
         if (args > 0) then
             code = code .. "push ecx \n";
-            code = code .. "mov ecx,["..util.int_to_str(arg_data+0).."] \n"
+            code = code .. "mov ecx,[" ..util.int_to_str(arg_data + 0).. "] \n"
             ret = ret - 4;
         end
     end
@@ -206,6 +209,7 @@ util.fremote.add = function(func, convention, args)
         end
     end
 
+    code = code .. "pop esi \n";
     code = code .. "pop eax \n";
     code = code .. "pop ebp \n"
     code = code .. "ret 04";
