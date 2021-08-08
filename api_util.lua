@@ -144,6 +144,19 @@ util.fremote.add = function(func, convention, args)
     code = code .. "push ebp \n";
     code = code .. "mov ebp,esp \n";
     code = code .. "push eax \n"; 
+	
+    if (convention == "thiscall") then
+        if (args > 0) then
+            code = code .. "push ecx \n"
+        end
+    elseif (convention == "fastcall") then
+        if (args > 0) then
+            code = code .. "push ecx \n"
+        end
+        if (args > 1) then
+            code = code .. "push edx \n"
+        end
+    end
 
     if (convention == "cdecl" or convention == "stdcall") then
         for i=args,1,-1 do
@@ -156,7 +169,6 @@ util.fremote.add = function(func, convention, args)
 	    end
         end
         if (args > 0) then
-            code = code .. "push ecx \n";
             code = code .. "mov ecx,[" ..util.int_to_str(arg_data+0).. "] \n"
             ret = ret - 4;
         end
@@ -167,12 +179,10 @@ util.fremote.add = function(func, convention, args)
             end
         end
 	if (args > 1) then
-            --code = code .. "push edx \n";
             code = code .. "mov edx,[" ..util.int_to_str(arg_data + 4).. "] \n"
             ret = ret - 4;
         end
         if (args > 0) then
-            --code = code .. "push ecx \n";
             code = code .. "mov ecx,[" ..util.int_to_str(arg_data + 0).. "] \n"
             ret = ret - 4;
         end
@@ -191,19 +201,19 @@ util.fremote.add = function(func, convention, args)
         if (args > 1) then
             code = code .. "add esp,"..util.byte_to_str((args-1)*4).." \n"
         end
-        --if (args > 0) then
-            --code = code .. "pop ecx \n"
-        --end
+        if (args > 0) then
+            code = code .. "pop ecx \n"
+        end
     elseif (convention == "fastcall") then
         if (args > 2) then
             code = code .. "add esp,"..util.byte_to_str((args-2)*4).." \n"
         end
-        --if (args > 0) then
-            --code = code .. "pop ecx \n"
-        --end
-        --if (args > 1) then
-            --code = code .. "pop edx \n"
-        --end
+        if (args > 0) then
+            code = code .. "pop ecx \n"
+        end
+        if (args > 1) then
+            code = code .. "pop edx \n"
+        end
     end
 
     code = code .. "pop eax \n";
