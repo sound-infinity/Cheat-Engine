@@ -132,7 +132,7 @@ if (dump_bytecode) then
     print("Waiting for a script to run...hurry before kick")
 
     while (readInteger(ptr_bytecode) == 0 and readInteger(ptr_bytecode_size) == 0) do
-        sleep(100);
+        sleep(1);
     end
 
     print("Bytecode: " .. util.int_to_str(readInteger(ptr_bytecode)));
@@ -144,9 +144,8 @@ if (dump_bytecode) then
     if(lbi_check and readInteger(ptr_bytecode_size) < 0x100000) then
 
         local data = readBytes(readInteger(ptr_bytecode), readInteger(ptr_bytecode_size), true);
-        data[1] = 0x01;
 
-        local output = io.open(output_file, "w+b");
+        local output = io.open(output_file, "wb");
         output:write(string.char(unpack(data)));
         output:close();
 
