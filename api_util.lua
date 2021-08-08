@@ -143,7 +143,7 @@ util.fremote.add = function(func, convention, args)
     code = code .. util.int_to_str(loc)..": \n";
     code = code .. "push ebp \n";
     code = code .. "mov ebp,esp \n";
-    code = code .. "push eax \n";
+    code = code .. "push eax \n"; 
 
     if (convention == "cdecl" or convention == "stdcall") then
         for i=args,1,-1 do
