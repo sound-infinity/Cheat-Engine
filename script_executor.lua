@@ -90,25 +90,25 @@ retcheck.patch = function(address)
     local func_start = address;
     local func_end = util.next_prologue(func_start + 16);
     local func_size = func_end - func_start;
-    
+
     local mod = allocateMemory(1024);
     local loc_prev_eip = mod + 0x200;
     local ptr_start = mod + 0x204;
-    
+
 
     print("retcheck patch: " .. util.int_to_str(mod));
-    
+
     local has_prologue = true; -- assume it is not naked func
     local prologue_reg = util.read_byte(func_start) % 8;
     func_start = func_start + 3;
     writeInteger(ptr_start, func_start);
-    
+
     local b1 = util.int_to_bytes(loc_prev_eip);
     local b2 = util.int_to_bytes(retcheck.routine);
     local b3 = util.int_to_bytes(mod + 0x25);
     local b4 = util.int_to_bytes(retcheck.pointer);
     local b5 = util.int_to_bytes(ptr_start);
-    
+
     local patch_bytes = {
         0x50 + prologue_reg,			-- push ebp
         0x8B, 0xC4 + (prologue_reg * 8), 	-- mov ebp,esp
@@ -123,7 +123,7 @@ retcheck.patch = function(address)
 	0xFF, 0x25, b5[3], b5[2], b5[1], b5[0],	-- jmp dword ptr [->func_start]
 	0xFF, 0x25, b1[3], b1[2], b1[1], b1[0] 	-- jmp dword ptr [previous eip]
     }
-    
+
     writeBytes(mod, patch_bytes);
     return mod;
 end
@@ -169,11 +169,15 @@ function checkHook(timer)
             -- restore lua state hook bytes
             writeBytes(ls_hook_from, { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08 });
 
-            --rL = util.fremote.call(r_newthread, {rL}).ret32;
+            rL = util.fremote.call(r_newthread, { rL }).ret32;
             print("Lua state: " ..util.int_to_str(rL));
 
-            util.fremote.call(r_deserialize, {rL, chunk_name, bytecode, bytecode_size, 0});
-            util.fremote.call(r_spawn, {rL});
+            local status = util.fremote.call(r_deserialize, { rL, chunk_name, bytecode, bytecode_size, 0 }).ret32;
+            if (status == 0) then
+                util.fremote.call(r_spawn, { rL });
+            else
+                print("Bytecode error")
+            end
         end
     end
 end
