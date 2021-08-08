@@ -1,6 +1,9 @@
 local pid = getProcessIDFromProcessName("RobloxPlayerBeta.exe");
 openProcess(pid);
 
+dump_bytecode = false; -- Set this to true if you're going to dump LBI bytecode
+output_file = "C:/Users/USERNAME_HERE/Desktop/bytecode_example.bin";
+
 function get_util_api()
     http = getInternet()
     local api_util = http.getURL("https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/api_util.lua")
@@ -10,25 +13,6 @@ end
 
 util = loadstring(get_util_api())();
 util.init(pid);
-
-local http = getInternet()
-local bytecode_fetch = http.getURL("https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/bytecode_example.bin")
-http.destroy()
-
-local bytecode_size = string.len(bytecode_fetch);
-local bytecode = allocateMemory(bytecode_size);
-
-for at = 1, bytecode_size do
-	local i = at - 1;
-	writeBytes(bytecode + i, {bytecode_fetch:byte(at,at)});
-end
-
-writeInteger(bytecode + bytecode_size + 4 + (bytecode_size % 4), bytecode_size);
-
-
-print(util.int_to_str(bytecode))
-print(util.int_to_str(bytecode_size))
-
 
 
 local rluab_pcall       = util.get_prologue(util.aobscan("8B????3B????0F83????????81??????????0F84")[1]); -- 8B????3B????0F83????????81
@@ -123,6 +107,56 @@ end
 util.fremote.init();
 
 
+if (dump_bytecode) then
+    local scr_hook = allocateMemory(1024);
+    local ptr_bytecode = scr_hook + 0x200;
+    local ptr_bytecode_size = scr_hook + 0x204;
+
+
+    autoAssemble(util.int_to_str(scr_hook)..[[:
+    push ebx
+    mov ebx,esp
+    sub esp,8
+    push eax
+    mov eax,[ebx+8]
+    mov []]..util.int_to_str(ptr_bytecode)..[[],eax
+    mov eax,[ebx+C]
+    mov []]..util.int_to_str(ptr_bytecode_size)..[[],eax
+    pop eax
+    jmp ]]..util.int_to_str(rluau_loadbuffer + 6)..[[
+
+    ]]..util.int_to_str(rluau_loadbuffer)..[[:
+    jmp ]]..util.int_to_str(scr_hook)..[[
+    ]])
+
+    print("Waiting for a script to run...hurry before kick")
+
+    while (readInteger(ptr_bytecode) == 0 and readInteger(ptr_bytecode_size) == 0) do
+        sleep(100);
+    end
+
+    print("Bytecode: " .. util.int_to_str(readInteger(ptr_bytecode)));
+    print("Bytecode size: " .. tostring(readInteger(ptr_bytecode_size)));
+
+    local lbi_check = readInteger(ptr_bytecode_size) > 0x4000;
+    -- you can remove this check if youd like
+
+    if(lbi_check and readInteger(ptr_bytecode_size) < 0x100000) then
+
+        local data = readBytes(readInteger(ptr_bytecode), readInteger(ptr_bytecode_size), true);
+        data[1] = 0x01;
+
+        local output = io.open(output_file, "w+b");
+        output:write(string.char(unpack(data)));
+        output:close();
+
+        print'Wrote binary to file'
+    end
+
+    return;
+end
+
+
 print("loading functions");
 
 -- update our functions to a standard __stdcall
@@ -136,9 +170,32 @@ print("new spawn: "        .. util.int_to_str(rluab_pcall));
 print("new newthread: "    .. util.int_to_str(rluae_newthread));
 
 
+
+
+
 local chunk_name = ls_hook_to - 0x40; -- use existing memory
 writeString(chunk_name, "=Script1");
 writeInteger(chunk_name + 12, 8);
+
+
+local http = getInternet()
+local bytecode_fetch = http.getURL("https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/bytecode_example.bin")
+http.destroy()
+
+local bytecode_size = string.len(bytecode_fetch);
+local bytecode = allocateMemory(bytecode_size);
+
+for at = 1, bytecode_size do
+	local i = at - 1;
+	writeBytes(bytecode + i, {bytecode_fetch:byte(at,at)});
+end
+
+writeInteger(bytecode + bytecode_size + 4 + (bytecode_size % 4), bytecode_size);
+
+
+print(util.int_to_str(bytecode))
+print(util.int_to_str(bytecode_size))
+
 
 
 -- Place the lua state hook
