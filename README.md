@@ -11,7 +11,7 @@ I'm going to use every capability that cheat engine has to offer to prove it is 
 
 
 
-# SCRIPT EXECUTOR GUIDE
+# SCRIPT EXECUTOR GUIDE (OUTDATED - DO NOT ATTEMPT)
 
 Open Cheat Engine.
 Hit Memory View.
