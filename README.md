@@ -1,3 +1,16 @@
+# LATEST UPDATE -- PLEASE READ
+
+After a long duration of side projects, I'm coming back to redo this completely.
+
+I intend to do full scale execution with custom environments using nothing more than cheat engine's Lua Engine,
+and on top of that, all of it will operate externally.
+I'm going to use every capability that cheat engine has to offer to prove it is still perfectly useful and on-par with today's exploiting standards.
+
+
+
+
+
+
 # SCRIPT EXECUTOR GUIDE
 
 Open Cheat Engine.
