@@ -139,7 +139,6 @@ celua.deserialize = function(func)
     local function next()
         local thisProto = {};
 
-        thisProto.protoId = #protoTable;
         thisProto.lineStart = reader:nextInt();
         thisProto.lineEnd = reader:nextInt();
         thisProto.numParams = reader:nextByte();
