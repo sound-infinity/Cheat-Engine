@@ -166,7 +166,7 @@ celua.deserialize = function(func)
                 -- nothing
             elseif const.Type == 1 then -- bool
                 const.Data = reader:nextByte();
-            elseif const.Type == 3 then -- number
+            elseif const.Type == 2 then -- number
                 const.Data = reader:nextDouble();
                 --print("Number value: ", const.Data);
             elseif const.Type == 4 then -- string
