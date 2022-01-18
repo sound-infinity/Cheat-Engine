@@ -662,20 +662,6 @@ util.new_detour = function(location, reg32, reg_offset, count, new_value)
 	return detour_data;
 end
 
---[[
-Pardon my language but when you release something good for free,
-it makes alot of the middle schoolers in exploit development very angry.
-
-Here's a list of the most toxic users in this community -- literal bastards,
-who are covered in cystic acne and can't get a girlfriend:
-
-- Kronix     -- Owner of "Temple", a shitsploit that nobody uses or likes, but no one can refund.
-- Berserker  -- /\
-- Customality -- Owner of Sentinel, the exploit that took 12 months to release just so he can expand his massive ego
-- ShowerHeadFD -- Owner of Krnl, the free exploit that he didn't make
-- Ice Bear -- Annoying person w/ ego
-- Shade -- Annoying person w/ ego
-]]
 util.new_remote = function(options)
 
 	local default_options	= not options;
