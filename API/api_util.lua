@@ -398,7 +398,7 @@ util.create_detour = function(location, on_execute, event_trigger)
 		bytes_jmpback[1], bytes_jmpback[2], bytes_jmpback[3], bytes_jmpback[4]
 	});
 	
-	util.write_bytes(hook, bytes1);
+	util.write_bytes(hook, bytes);
 	
 	local nops = hook_size - 5;
 	local start_code = util.int_to_str(location)..": \n";
@@ -558,7 +558,7 @@ util.new_detour = function(location, reg32, reg_offset, count, new_value)
 		-- label dump_next_register
 		0x89, 5 + (debug_reg * 8), -- mov [actual reg value], debug_reg
 		bytes_reg_value[1], bytes_reg_value[2], bytes_reg_value[3], bytes_reg_value[4]
-	}
+	};
 	
 	if new_value ~= nil then
 		local bytes2 = nil
@@ -605,6 +605,7 @@ util.new_detour = function(location, reg32, reg_offset, count, new_value)
 		0x9D, -- popfd
 		0x61, -- popad
 	});
+	
 	tcombine(bytes, old_bytes);
 	
 	tcombine(bytes, {
@@ -612,7 +613,7 @@ util.new_detour = function(location, reg32, reg_offset, count, new_value)
 		bytes_jmpback[1], bytes_jmpback[2], bytes_jmpback[3], bytes_jmpback[4]
 	});
 	
-	util.write_bytes(hook, bytes1);
+	util.write_bytes(hook, bytes);
 	
 	local nops = hook_size - 5;
 	local start_code = util.int_to_str(location)..": \n";
@@ -661,6 +662,20 @@ util.new_detour = function(location, reg32, reg_offset, count, new_value)
 	return detour_data;
 end
 
+--[[
+Pardon my language but when you release something good for free,
+it makes alot of the middle schoolers in exploit development very angry.
+
+Here's a list of the most toxic users in this community -- literal bastards,
+who are covered in cystic acne and can't get a girlfriend:
+
+- Kronix     -- Owner of "Temple", a shitsploit that nobody uses or likes, but no one can refund.
+- Berserker  -- /\
+- Customality -- Owner of Sentinel, the exploit that took 12 months to release just so he can expand his massive ego
+- ShowerHeadFD -- Owner of Krnl, the free exploit that he didn't make
+- Ice Bear -- Annoying person w/ ego
+- Shade -- Annoying person w/ ego
+]]
 util.new_remote = function(options)
 
 	local default_options	= not options;
