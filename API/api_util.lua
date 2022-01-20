@@ -48,7 +48,7 @@ util.write_string = writeString;
 
 util.allocate_memory = allocateMemory;
 util.start_thread = executeCode;
-util.free_memory = function(x) end --deAlloc;
+util.free_memory = deAlloc;
 
 util.byte_to_str = function(b)
     return string.format("%02X", b);
@@ -325,6 +325,7 @@ util.create_detour = function(location, on_execute, event_trigger)
 	util.write_int32(signal_location, 0);
 	util.write_int32(jmpback_location, location + hook_size);
 	
+	-- used to maintain a safer CPU usage
 	local kernel_sleep = getAddress("KERNEL32.Sleep");
 	util.write_int32(sleep_location, kernel_sleep);
 	
@@ -359,17 +360,19 @@ util.create_detour = function(location, on_execute, event_trigger)
 		bytes_esi[1], bytes_esi[2], bytes_esi[3], bytes_esi[4],
 		0x89, 0x5 + (8 * 7), -- mov [????????],edi
 		bytes_edi[1], bytes_edi[2], bytes_edi[3], bytes_edi[4],
-		--0x68, 1, 0, 0, 0, -- push 1
-		--0xFF, 0x15, -- call dword ptr [Kernel32.Sleep]
-		--bytes_sleep[1], bytes_sleep[2], bytes_sleep[3], bytes_sleep[4],
+		-- label1 (current):
+		0x68, 1, 0, 0, 0, -- push 1
+		0xFF, 0x15, -- call dword ptr [Kernel32.Sleep]
+		bytes_sleep[1], bytes_sleep[2], bytes_sleep[3], bytes_sleep[4],
+		-- label1:
 		0x81, 0x3D, -- cmp [signal], 2
 		bytes_signal[1], bytes_signal[2], bytes_signal[3], bytes_signal[4],
 		2, 0, 0, 0, 
-		--[[0x72, 0xE9, ]]0x72, 0xF4, -- je label1 -- 0x7D 0xF4 --> jnl
+		0x72, 0xE9,--0x72, 0xF4, -- je label1 -- 0x7D 0xF4
 		0xC7, 0x05, -- mov [signal], 3
 		bytes_signal[1], bytes_signal[2], bytes_signal[3], bytes_signal[4],
 		3, 0, 0, 0,
-		--[[0x8B, 0x5 + (8 * 0), -- mov [????????],eax
+		0x8B, 0x5 + (8 * 0), -- mov [????????],eax
 		bytes_eax[1], bytes_eax[2], bytes_eax[3], bytes_eax[4],
 		0x8B, 0x5 + (8 * 1), -- mov [????????],ecx
 		bytes_ecx[1], bytes_ecx[2], bytes_ecx[3], bytes_ecx[4],
@@ -384,7 +387,7 @@ util.create_detour = function(location, on_execute, event_trigger)
 		0x8B, 0x5 + (8 * 6), -- mov [????????],esi
 		bytes_esi[1], bytes_esi[2], bytes_esi[3], bytes_esi[4],
 		0x8B, 0x5 + (8 * 7), -- mov [????????],edi
-		bytes_edi[1], bytes_edi[2], bytes_edi[3], bytes_edi[4],]]
+		bytes_edi[1], bytes_edi[2], bytes_edi[3], bytes_edi[4],
 		0x9D, -- popfd
 		0x61, -- popad
 	};
