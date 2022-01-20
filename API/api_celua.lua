@@ -29,19 +29,9 @@ celua.MASK0 = function(n,p) return (~celua.MASK1(n, p)) end
 celua.GETARG_A = function(inst) return (((inst) >> celua.POS_A) & celua.MASK1(celua.SIZE_A,0)) end
 celua.GETARG_B = function(inst) return (((inst) >> celua.POS_B) & celua.MASK1(celua.SIZE_B,0)) end
 celua.GETARG_C = function(inst) return (((inst) >> celua.POS_C) & celua.MASK1(celua.SIZE_C,0)) end
---celua.GETARG_Bx = function(inst) return (((inst) >> celua.POS_Bx) & celua.MASK1(celua.SIZE_Bx,0)) end
---celua.GETARG_sBx = function(inst) return (celua.GETARG_Bx(inst) - celua.MAXARG_sBx) end
-celua.GETARG_Bx = function(i) return ((celua.GETARG_B(i) << 8) | (celua.GETARG_C(i))) & 0xFFFF end
-celua.GETARG_sBx = function(i)
-	local Bx = celua.GETARG_Bx(i);
-	local sBx = Bx + 1;
-	if Bx > 0x7FFF and Bx <= 0xFFFF then
-		sBx = -(0xFFFF - Bx);
-		sBx = sBx - 1;
-	end
-	return sBx;
-end
-			
+celua.GETARG_Bx = function(inst) return (((inst) >> celua.POS_Bx) & celua.MASK1(celua.SIZE_Bx,0)) end
+celua.GETARG_sBx = function(inst) return (celua.GETARG_Bx(inst) - celua.MAXARG_sBx) end
+	
 celua.GET_OPCODE = function(inst) return (((inst) >> celua.POS_OP) & celua.MASK1(celua.SIZE_OP, 0)) end
 celua.OPCODE_NAMES = {"MOVE", "LOADK", "LOADKX", "LOADBOOL", "LOADNIL",
     "GETUPVAL", "GETTABUP", "GETTABLE", "SETTABUP", "SETUPVAL",
