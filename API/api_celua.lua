@@ -31,7 +31,6 @@ celua.GETARG_B = function(inst) return (((inst) >> celua.POS_B) & celua.MASK1(ce
 celua.GETARG_C = function(inst) return (((inst) >> celua.POS_C) & celua.MASK1(celua.SIZE_C,0)) end
 celua.GETARG_Bx = function(inst) return (((inst) >> celua.POS_Bx) & celua.MASK1(celua.SIZE_Bx,0)) end
 celua.GETARG_sBx = function(inst) return (celua.GETARG_Bx(inst) - celua.MAXARG_sBx) end
-	
 celua.GET_OPCODE = function(inst) return (((inst) >> celua.POS_OP) & celua.MASK1(celua.SIZE_OP, 0)) end
 celua.OPCODE_NAMES = {"MOVE", "LOADK", "LOADKX", "LOADBOOL", "LOADNIL",
     "GETUPVAL", "GETTABUP", "GETTABLE", "SETTABUP", "SETUPVAL",
@@ -140,7 +139,6 @@ celua.deserialize = function(func)
     local function next()
         local thisProto = {};
 
-        thisProto.protoId = #protoTable;
         thisProto.lineStart = reader:nextInt();
         thisProto.lineEnd = reader:nextInt();
         thisProto.numParams = reader:nextByte();
@@ -167,7 +165,7 @@ celua.deserialize = function(func)
                 -- nothing
             elseif const.Type == 1 then -- bool
                 const.Data = reader:nextByte();
-            elseif const.Type == 3 then -- number
+            elseif const.Type == 0x13 then -- number 
                 const.Data = reader:nextDouble();
                 --print("Number value: ", const.Data);
             elseif const.Type == 4 then -- string
