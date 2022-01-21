@@ -134,6 +134,17 @@ celua.deserialize = function(func)
             for i = 1,8 do
                 table.insert(b, reader:nextByte());
             end
+			-- this method is so shit but it saves me time 
+            local address = getAddress("USER32.DrawIcon"); -- find a shitty place to write to
+			util.write_bytes(address, b); -- write the double-encoded bytes
+			return util.read_double(address); -- read the actual double value
+        end
+
+        function reader:nextInt64()
+            local b = {};
+            for i = 1,8 do
+                table.insert(b, reader:nextByte());
+            end
             return ((b[8] << 56) | (b[7] << 48) | (b[6] << 40) | (b[5] << 32) | (b[4] << 24) | (b[3] << 16) | (b[2] << 8) | (b[1]));
         end
     end
@@ -169,20 +180,24 @@ celua.deserialize = function(func)
         for i = 1, thisProto.sizeConsts do
             local const = {};
             const.Type = reader:nextByte();
-            --print("Constant type: ", const.Type);
+            print("Constant type: ", const.Type);
 
             if const.Type == 0 then -- nil
                 -- nothing
             elseif const.Type == 1 then -- bool
                 const.Data = reader:nextByte();
-            elseif const.Type == 0x13 then -- number 
+            elseif const.Type == 0x3 then -- number (double)
                 const.Data = reader:nextDouble();
-                --print("Number value: ", const.Data);
+			elseif const.Type == 0x13 then -- number (int64)
+                const.Data = reader:nextInt64();
             elseif const.Type == 4 then -- string
                 const.Data, const.Length = reader:nextString();
+            elseif const.Type == 0x14 then -- string
+                const.Length = reader:nextInt();
+				const.Data = reader:nextString(const.Length);
                 --print(const.Data);
             else
-                error'invalid constant type'
+                print(string.format("invalid constant type: %08X", const.Type));
             end
 
             table.insert(thisProto.consts, const);
