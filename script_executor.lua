@@ -1040,14 +1040,14 @@ loader.start = function()
     print("DataModel: " .. string.format("%08X", rbx.data_model));
 
     rbx.script_context = rbx.functions.find_first_child(rbx.data_model, "Script Context");
-    if not rbx.script_context then
+    if rbx.script_context == 0 then
        error'Could not locate Script Context'
     end
     print("ScriptContext: " .. string.format("%08X", rbx.script_context));
 
     rbx.local_player = 0;
     rbx.players_service = rbx.functions.find_first_child(rbx.data_model, "Players");
-    if not rbx.players_service then
+    if rbx.players_service == 0 then
        error'Could not locate Players'
     end
 
@@ -1065,7 +1065,7 @@ loader.start = function()
         end
     end
 
-    if not rbx.local_player then
+    if rbx.local_player == 0 then
        error'Could not find LocalPlayer'
     end
 
@@ -1076,11 +1076,11 @@ loader.start = function()
     rbx.local_player_scripts = rbx.functions.find_first_child(rbx.local_player, "PlayerScripts");
     rbx.local_script = rbx.functions.find_first_child(rbx.local_player_scripts, "RbxCharacterSounds");
 
-    if not rbx.local_script then
+    if rbx.local_script == 0 then
         rbx.local_script = rbx.functions.find_first_child(rbx.local_player_scripts, "BubbleChat");
     end
 
-    if not rbx.local_script then
+    if rbx.local_script == 0 then
         error("Could not find a usable LocalScript (we're trying to be resourceful here)")
     end
 
