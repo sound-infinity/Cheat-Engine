@@ -7,13 +7,9 @@ function rbx_main()
         tool = Instance.new("Tool")
         tool.Name = "Click Teleport"
         tool.RequiresHandle = false;
-        print(tool.RequiresHandle);
         tool.Activated:Connect(function()
-            print(2.5);
             local pos = mouse.Hit + Vector3.new(0, 2.5, 0);
-            print(pos.X, pos.Y, pos.Z)
             pos = CFrame.new(pos.X, pos.Y, pos.Z)
-            warn(pos.X, pos.Y, pos.Z)
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
         end)
         tool.Parent = game.Players.LocalPlayer.Backpack
