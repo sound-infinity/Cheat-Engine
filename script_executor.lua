@@ -1,234 +1,1125 @@
-local pid = getProcessIDFromProcessName("RobloxPlayerBeta.exe");
-openProcess(pid);
+assert(_VERSION ~= "5.3", "Lua 5.3 expected");
 
-dump_bytecode = false; -- Set this to true if you're going to dump LBI bytecode
-output_file = "C:/Users/USERNAME_HERE/Desktop/bytecode_example.bin";
-
-function get_util_api()
-    http = getInternet()
-    local api_util = http.getURL("https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/api_util.lua")
-    http.destroy()
-    return api_util;
+-- this function runs inside ROBLOX
+function rbx_main()
+    spawn(function()
+        mouse = game.Players.LocalPlayer:GetMouse()
+        tool = Instance.new("Tool")
+        tool.Name = "Click Teleport"
+        tool.RequiresHandle = false;
+        print(tool.RequiresHandle);
+        tool.Activated:Connect(function()
+            print(2.5);
+            local pos = mouse.Hit + Vector3.new(0, 2.5, 0);
+            print(pos.X, pos.Y, pos.Z)
+            pos = CFrame.new(pos.X, pos.Y, pos.Z)
+            warn(pos.X, pos.Y, pos.Z)
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
+        end)
+        tool.Parent = game.Players.LocalPlayer.Backpack
+    end)
 end
 
-util = loadstring(get_util_api())();
+
+function load_api(name)
+    http = getInternet()
+    local api_util = http.getURL("https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/API/"..name);
+    http.destroy()
+    return loadstring(api_util);
+end
+
+loader = {};
+loader.clock_start = os.clock();
+
+-- import my deserializer for lua 5.3
+load_api("api_celua.lua")();
+
+-- import my memory utilities
+load_api("api_util.lua")();
+
+pid = getProcessIDFromProcessName("RobloxPlayerBeta.exe");
+openProcess(pid);
+
 util.init(pid);
 
 
-local rluab_pcall       = util.get_prologue(util.aobscan("8B????3B????0F83????????81??????????0F84")[1]); -- 8B????3B????0F83????????81
-local rluau_loadbuffer  = util.get_prologue(util.aobscan("0F????83??7FD3??83??0709")[1]);
-local rluae_newthread   = util.get_prologue(util.aobscan("68280A00006A006A006A006A00E8")[1] - 0x30);
---local rluae_newthread = util.get_prologue(util.aobscan("88????E8????????0F1046??0F11????")[1]);
-local ls_hook_from      = util.get_prologue(util.aobscan("73????FF??8B??83C404")[1]);
+rbx = {};
+rbx.offsets = {};
+rbx.functions = {};
+rbx.luau = {};
 
-
-print("deserialize: "  .. util.int_to_str(rluau_loadbuffer));
-print("spawn: "        .. util.int_to_str(rluab_pcall));
-print("newthread: "    .. util.int_to_str(rluae_newthread));
-
-
-
--- lua state hook
+-- excerpt from lopcodes.h and modified for luau format
 --
-local rL = 0;
-local ls_hook_to = allocateMemory(0x1000) + 0x100;
+rbx.luau.size_c = 8;
+rbx.luau.size_b = 8;
+rbx.luau.size_bx = (rbx.luau.size_c + rbx.luau.size_b);
+rbx.luau.size_a = 8;
+rbx.luau.size_op = 8;
+rbx.luau.pos_op = 0;
+rbx.luau.pos_a = (rbx.luau.pos_op + rbx.luau.size_op);
+rbx.luau.pos_c = (rbx.luau.pos_a + rbx.luau.size_a);
+rbx.luau.pos_b = (rbx.luau.pos_c + rbx.luau.size_c);
+rbx.luau.pos_bx = rbx.luau.pos_c;
+rbx.luau.maxarg_a = ((1 << rbx.luau.size_a) - 1);
+rbx.luau.maxarg_b = ((1 << rbx.luau.size_b) - 1);
+rbx.luau.maxarg_c = ((1 << rbx.luau.size_c) - 1);
+rbx.luau.maxarg_bx = ((1 << rbx.luau.size_bx) - 1);
+rbx.luau.maxarg_sbx = (rbx.luau.maxarg_bx >> 1);
 
-local trace_loc = ls_hook_to - 4;
-local b1 = util.int_to_bytes(trace_loc);
+rbx.luau.mask1 = function(n,p) return (~((~0) << n)) << p end
+rbx.luau.mask0 = function(n,p) return (~rbx.luau.mask1(n, p)) end
 
-local ls_hook_ptr = ls_hook_to - 8;
-writeInteger(ls_hook_ptr, ls_hook_to);
+rbx.luau.set_opcode = function(i,o)
+    return (((i & rbx.luau.mask0(rbx.luau.size_op, rbx.luau.pos_op)) | ((o << rbx.luau.pos_op) & rbx.luau.mask1(rbx.luau.size_op, rbx.luau.pos_op))));
+end
 
-local ls_hook_jmpback = ls_hook_to - 12;
-local b2 = util.int_to_bytes(ls_hook_jmpback);
+rbx.luau.setarg_a = function(i,o)
+    return (((i & rbx.luau.mask0(rbx.luau.size_a, rbx.luau.pos_a)) | ((o << rbx.luau.pos_a) & rbx.luau.mask1(rbx.luau.size_a, rbx.luau.pos_a))));
+end
 
-writeInteger(ls_hook_jmpback, ls_hook_from + 6);
-writeBytes(ls_hook_to,{
-    0x55,
-    0x8B, 0xEC,
-    0x83, 0xEC, 0x08,
-    0x89, 0x0D, b1[3], b1[2], b1[1], b1[0],
-    0xFF, 0x25, b2[3], b2[2], b2[1], b2[0]
-});
+rbx.luau.setarg_b = function(i,o)
+    return (((i & rbx.luau.mask0(rbx.luau.size_b, rbx.luau.pos_b)) | ((o << rbx.luau.pos_b) & rbx.luau.mask1(rbx.luau.size_b, rbx.luau.pos_b))));
+end
+
+rbx.luau.setarg_bx = function(i,o)
+    return (((i & rbx.luau.mask0(rbx.luau.size_bx, rbx.luau.pos_bx)) | ((o << rbx.luau.pos_bx) & rbx.luau.mask1(rbx.luau.size_bx, rbx.luau.pos_bx))));
+end
+
+rbx.luau.setarg_c = function(i,o)
+    return (((i & rbx.luau.mask0(rbx.luau.size_c, rbx.luau.pos_c)) | ((o << rbx.luau.pos_c) & rbx.luau.mask1(rbx.luau.size_c, rbx.luau.pos_c))));
+end
+
+rbx.luau.setarg_sbx = function(i,o)
+    return rbx.luau.setarg_bx(i, o);
+end
+
+rbx.luau.op_noop = 0x00;
+rbx.luau.op_markupval = 0x12;
+rbx.luau.op_initva = 0xA3;
+rbx.luau.op_move = 0x52;
+rbx.luau.op_loadnil = 0xC6;
+rbx.luau.op_loadbool = 0xA9;
+rbx.luau.op_loadnumber = 0x8C;
+rbx.luau.op_loadk = 0x6F;
+rbx.luau.op_newtable = 0xFF;
+rbx.luau.op_getupval = 0xFB;
+rbx.luau.op_getglobal = 0x35;
+rbx.luau.op_gettable = 0x87;
+rbx.luau.op_setupval = 0xDE;
+rbx.luau.op_setglobal = 0x18;
+rbx.luau.op_settable = 0x6A;
+rbx.luau.op_setlist = 0xC5;
+rbx.luau.op_unm = 0x39;
+rbx.luau.op_not = 0x56;
+rbx.luau.op_len = 0x1C;
+rbx.luau.op_concat = 0x73;
+rbx.luau.op_tforloop = 0x6E;
+rbx.luau.op_forprep = 0xA8;
+rbx.luau.op_forloop = 0x8B;
+rbx.luau.op_jmp = 0x65;
+rbx.luau.op_self = 0xBC;
+rbx.luau.op_add = 0x43;
+rbx.luau.op_sub = 0x26;
+rbx.luau.op_mul = 0x09;
+rbx.luau.op_div = 0xEC;
+rbx.luau.op_pow = 0xB2;
+rbx.luau.op_mod = 0xCF;
+rbx.luau.op_eq = 0xF1;
+rbx.luau.op_neq = 0x9A;
+rbx.luau.op_lt = 0xB7;
+rbx.luau.op_gt = 0x60;
+rbx.luau.op_le = 0xD4;
+rbx.luau.op_ge = 0x7D;
+rbx.luau.op_ntest = 0x2B;
+rbx.luau.op_test = 0x0E;
+rbx.luau.op_call = 0x9F;
+rbx.luau.op_vararg = 0xDD;
+rbx.luau.op_closure = 0xD9;
+rbx.luau.op_close = 0xC1;
+rbx.luau.op_return = 0x82;
+
+rbx.luau.const_nil = 0;
+rbx.luau.const_boolean = 1;
+rbx.luau.const_number = 2;
+rbx.luau.const_string = 3;
+
+rbx.code_ip = function(data)
+    return data;
+end
+
+rbx.code_ia = function(Op, A)
+    local new_inst = 0;
+    new_inst = rbx.luau.set_opcode(new_inst, Op);
+    new_inst = rbx.luau.setarg_a(new_inst, A);
+    return new_inst;
+end
+
+rbx.code_iab = function(Op, A, B)
+    local new_inst = 0;
+    new_inst = rbx.luau.set_opcode(new_inst, Op);
+    new_inst = rbx.luau.setarg_a(new_inst, A);
+    new_inst = rbx.luau.setarg_bx(new_inst, B);
+    return new_inst;
+end
+
+rbx.code_iabx = function(Op, A, Bx)
+    local new_inst = 0;
+    new_inst = rbx.luau.set_opcode(new_inst, Op);
+    new_inst = rbx.luau.setarg_a(new_inst, A);
+    new_inst = rbx.luau.setarg_bx(new_inst, Bx);
+    return new_inst;
+end
+
+rbx.code_iasbx = function(Op, A, sBx)
+    local new_inst = 0;
+    new_inst = rbx.luau.set_opcode(new_inst, Op);
+    new_inst = rbx.luau.setarg_a(new_inst, A);
+    new_inst = rbx.luau.setarg_sbx(new_inst, sBx);
+    return new_inst;
+end
+
+rbx.code_iabc = function(Op, A, B, C)
+    local new_inst = 0;
+    new_inst = rbx.luau.set_opcode(new_inst, Op);
+    new_inst = rbx.luau.setarg_a(new_inst, A);
+    new_inst = rbx.luau.setarg_b(new_inst, C);
+    new_inst = rbx.luau.setarg_c(new_inst, B);
+    return new_inst;
+end
 
 
 
-local retcheck = {};
+rbx.transpile = function(proto)
+    --print("proto sizecode: ", proto.sizeCode);
+    --[[if #proto.upValueNames > 0 then
+        if proto.upValueNames[1] == '_ENV' then
+            proto.upValueNames[1] = nil;
+        end
+    end
+    ]]
+    local rbxProto = {};
+
+    rbxProto.sizeCode = 0;
+    rbxProto.code = {};
+    rbxProto.lines = 0;
+    rbxProto.lineInfos = {};
+    rbxProto.maxStackSize = proto.maxStackSize;
+
+    local open_reg = { false, false, false };
+    local new_sizes = {};
+    local marked_ups = {};
+    local self_map = {};
+    local relocations = {};
+    local close_upvalues = false;
+
+    local function apply_relocation(index_from, offset, shift)
+        local t = {};
+        t.from_index = index_from; -- index_from = `at` = lua indexing (starts at 1)
+        t.to_index = t.from_index + offset; -- add 1 to compensate ^^^
+        t.real_code_index = #rbxProto.code;
+        t.shift = shift or 0;
+        table.insert(relocations, t);
+    end
+
+    table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_initva, 0, proto.numParams));
+
+    local open_reg_at = 1;
+    local at = 1;
+    while at <= proto.sizeCode do
+        local new_inst = 0;
+        local open_reg_at = 1;
+        local i = proto.code[at];
+        local opcode_name = celua.OPCODE_NAMES[celua.GET_OPCODE(i) + 1];
+        local A = celua.GETARG_A(i);
+        local B = celua.GETARG_B(i);
+        local C = celua.GETARG_C(i);
+
+        -- this solution works better..and avoids
+        -- dealing with the hell of lua numbers
+        local Bx = ((B << 8) | (C)) & 0xFFFF;
+        local sBx = Bx + 1;
+        if Bx > 0x7FFF and Bx <= 0xFFFF then
+            sBx = -(0xFFFF - Bx);
+            sBx = sBx - 1;
+        end
+
+        table.insert(new_sizes, #rbxProto.code);
+        --print(string.format("Opcode: %s %02X %02X %02X", opcode_name, A, B, C));
+
+        local function next_open_reg()
+            local slot_index = proto.maxStackSize + (open_reg_at - 1);
+            open_reg[open_reg_at] = true;
+            open_reg_at = open_reg_at + 1;
+            return slot_index;
+        end
+
+        if opcode_name == "ADD" or opcode_name == "SUB" or opcode_name == "DIV" or opcode_name == "MUL" or opcode_name == "POW" or opcode_name == "MOD" then
+            if celua.ISK(B) ~= 0 then
+                local real = celua.INDEXK(B);
+                B = next_open_reg();
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, B, real));
+            end
+
+            if celua.ISK(C) ~= 0 then
+                local real = celua.INDEXK(C);
+                C = next_open_reg();
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, C, real));
+            end
+
+            if opcode_name == "ADD" then
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_add, A, B, C));
+            elseif opcode_name == "SUB" then
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_sub, A, B, C));
+            elseif opcode_name == "MUL" then
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_mul, A, B, C));
+            elseif opcode_name == "DIV" then
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_div, A, B, C));
+            elseif opcode_name == "POW" then
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_pow, A, B, C));
+            elseif opcode_name == "MOD" then
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_mod, A, B, C));
+            end
+        elseif opcode_name == "MOVE" then
+            if marked_ups[at] then
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_markupval, 1, A));
+            else
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, A, B));
+            end
+        elseif opcode_name == "GETTABUP" then
+            local tname = proto.upValueNames[B + 1];
+            if not tname or tname == "_ENV" then
+                -- using _ENV? just do roblox GETGLOBAL
+                table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_getglobal, A));
+                table.insert(rbxProto.code, rbx.code_ip(celua.INDEXK(C)));
+            else
+                if celua.ISK(C) ~= 0 then
+                    local real = celua.INDEXK(C);
+                    C = next_open_reg();
+                    table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, C, real));
+                end
+
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_getupval, A, B));
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_gettable, A, A, C));
+            end
+        elseif opcode_name == "GETUPVAL" then
+            if marked_ups[at] then
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_markupval, 2, A));
+            else
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_getupval, A, B - 1));
+            end
+        elseif opcode_name == "SETUPVAL" then
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_setupval, A, B - 1));
+        elseif opcode_name == "SETTABUP" then
+            local tname = proto.upValueNames[A + 1];
+            if not tname or tname == "_ENV" then
+                -- using _ENV? just do roblox SETGLOBAL
+                table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_setglobal, celua.INDEXK(C)));
+                table.insert(rbxProto.code, rbx.code_ip(celua.INDEXK(B)));
+            else
+                if celua.ISK(B) ~= 0 then
+                    local real = celua.INDEXK(B);
+                    B = next_open_reg();
+                    table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, B, real));
+                end
+
+                if celua.ISK(C) ~= 0 then
+                    local real = celua.INDEXK(C);
+                    C = next_open_reg();
+                    table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, C, real));
+                end
+
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_getupval, A, C));
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_settable, C, A, B));
+            end
+        elseif opcode_name == "GETTABLE" then
+            if celua.ISK(C) ~= 0 then
+                local real = celua.INDEXK(C);
+                C = next_open_reg();
+                table.insert(rbxProto.code, rbx.code_iabx(rbx.luau.op_loadk, C, real));
+            end
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_gettable, A, B, C));
+        elseif opcode_name == "SETTABLE" then
+            if celua.ISK(B) ~= 0 then
+                local real = celua.INDEXK(B);
+                B = next_open_reg();
+                table.insert(rbxProto.code, rbx.code_iabx(rbx.luau.op_loadk, B, real));
+            end
+
+            if celua.ISK(C) ~= 0 then
+                local real = celua.INDEXK(C);
+                C = next_open_reg();
+                table.insert(rbxProto.code, rbx.code_iabx(rbx.luau.op_loadk, C, real));
+            end
+
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_settable, C, A, B));
+        elseif opcode_name == "FORPREP" then
+            local base = A;
+            local pos = next_open_reg();
+
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, pos + 0, base + 0));
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, base + 0, base + 1));
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, base + 1, base + 2));
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, base + 2, pos + 0));
+
+            table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_forprep, A));
+            apply_relocation(at, sBx, -4);
+
+            -- the sexy iterator fix
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, base + 3, base + 2));
+        elseif opcode_name == "FORLOOP" then
+            table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_forloop, A));
+            apply_relocation(at, sBx, 4);
+        elseif opcode_name == "TFORCALL" then
+            table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_tforloop, A, 2));
+
+            local i = proto.code[at + 1];
+            local B = celua.GETARG_B(i);
+            local C = celua.GETARG_C(i);
+            local Bx = ((B << 8) | (C)) & 0xFFFF;
+            local sBx = celua.GETARG_sBx(proto.code[at + 1]);
+            if Bx > 0x7FFF and Bx <= 0xFFFF then
+                sBx = -(0xFFFF - Bx);
+                sBx = sBx - 1;
+            end
+
+            apply_relocation(at, sBx + 2);
+
+            table.insert(rbxProto.code, rbx.code_ip(2));
+        elseif opcode_name == "TFORLOOP" then
+            table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_noop, 0));
+            --table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_jmp, 0, 0));
+            --apply_relocation(at, sBx + 2);
+        elseif opcode_name == "EQ" or opcode_name == "LT" or opcode_name == "LE" then
+            if celua.ISK(B) ~= 0 then
+                local real = celua.INDEXK(B);
+                B = next_open_reg();
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, B, real));
+            end
+
+            if celua.ISK(C) ~= 0 then
+                local real = celua.INDEXK(C);
+                C = next_open_reg();
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, C, real));
+            end
+
+            if A == 0 then
+                if opcode_name == "EQ" then
+                    table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_eq, B, 2));
+                elseif opcode_name == "LT" then
+                    table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_lt, B, 2));
+                elseif opcode_name == "LE" then
+                    table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_le, B, 2));
+                end
+            else
+                if opcode_name == "EQ" then
+                    table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_neq, B, 2));
+                elseif opcode_name == "LT" then
+                    table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_gt, B, 2));
+                elseif opcode_name == "LE" then
+                    table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_ge, B, 2));
+                end
+            end
+
+            table.insert(rbxProto.code, rbx.code_ip(C));
+        elseif opcode_name == "TEST" then -- A C  if not (R(A) <=> C) then pc++
+            if C > 0 then
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_ntest, A, 1));
+            else
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_test, A, 1));
+            end
+        elseif opcode_name == "TESTSET" then -- A B C  if (R(B) <=> C) then R(A) := R(B) else pc++
+            -- swap these modes?
+            if C > 0 then
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_ntest, A, 2));
+            else
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_test, A, 2));
+            end
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, A, B));
+        elseif opcode_name == "SETLIST" then
+            local lfields_per_flush = 50; -- doesnt seem to affect anything
+            local fields = 0;
+            if B ~= 0 then
+                fields = B + 1;
+            end
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_setlist, A, A + 1, fields));
+            table.insert(rbxProto.code, rbx.code_ip((C - 1) * lfields_per_flush + 1));
+        elseif opcode_name == "JMP" then
+            --[[if celua.OPCODE_NAMES[celua.GET_OPCODE(proto.code[at + sBx + 1]) + 1] == "TFORCALL" then
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_jmp, 0, 0));
+                apply_relocation(at, sBx + 1);
+            else]]
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_jmp, 0, 0));
+                apply_relocation(at, sBx + 1, -1);
+            --end
+        elseif opcode_name == "SELF" then
+            -- handled by CALL/TAILCALL
+        elseif opcode_name == "LOADK" then
+            table.insert(rbxProto.code, rbx.code_iabx(rbx.luau.op_loadk, A, Bx));
+        elseif opcode_name == "LOADBOOL" then
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_loadbool, A, B, C));
+        elseif opcode_name == "LOADNIL" then
+            while B >= A do
+                table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_loadnil, B));
+                B = B - 1;
+            end
+        elseif opcode_name == "CALL" or opcode_name == "TAILCALL" then
+            -- SELF(reg a, reg b, value c)
+            -- a + 1 = b;
+            -- a = b[c];
+            for self_at = at - 1, 1, -1 do
+                local self = proto.code[self_at];
+                local opcode_name = celua.OPCODE_NAMES[celua.GET_OPCODE(self) + 1];
+
+                if (opcode_name == "SELF") then
+                    proto.code[self_at] = 0; -- dont let this SELF get used again
+
+                    local prev = celua.GETARG_Bx(proto.code[self_at - 1]);
+
+                    table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_self, celua.GETARG_A(self), celua.GETARG_B(self)));
+
+                    if celua.ISK(celua.GETARG_C(self)) ~= 0 then
+                        table.insert(rbxProto.code, rbx.code_ip(celua.INDEXK(celua.GETARG_C(self))))
+                    else
+                        table.insert(rbxProto.code, rbx.code_ip(prev));
+                    end
+
+                    break;
+                end
+            end
+
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_call, A, B, C));
+        elseif opcode_name == "CONCAT" then
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_concat, A, B, C));
+        elseif opcode_name == "LEN" then
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_len, A, B, C));
+        elseif opcode_name == "UNM" then
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_unm, A, B, C));
+        elseif opcode_name == "NOT" then
+            table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_not, A, B, C));
+        elseif opcode_name == "VARARG" then
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_vararg, A, B));
+        elseif opcode_name == "NEWTABLE" then
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_newtable, A, 0));
+            table.insert(rbxProto.code, 0);
+        elseif opcode_name == "CLOSURE" then
+            table.insert(rbxProto.code, rbx.code_iabx(rbx.luau.op_closure, A, Bx));
+
+            local cl = proto.protos[Bx + 1];
+            if cl.nups > 0 then
+                close_upvalues = true;
+                for n = 1, cl.nups do
+                    local carry = true;
+                    local upvalue_name = cl.upValueNames[n + 1];
+
+                    --print("Got upvalue data --> ", upvalue_name);
+
+                    -- if the variable exists in the current scope,
+                    -- then we are initially passing it and it is not
+                    -- a carried upvalue
+                    for i,v in pairs(proto.locVars) do
+                        if v.name == upvalue_name then
+                            carry = false;
+                            break;
+                        end
+                    end
+                    --print(string.format("%s, %08X, %08X", cl.upValueNames[n], cl.upValues[n].Stack, cl.upValues[n].Register));
+
+                    if not carry then
+                        table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_markupval, 1, (A - cl.nups) + n - 1));
+                    else
+                        --print'Carrying'
+                        for i,v in pairs(proto.upValueNames) do
+                            if v == upvalue_name then
+								--print("Found initial upvalue, name: ", v);
+                                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_markupval, 2, i - 2));
+                                break;
+                            end
+                        end
+                    end
+                end
+            end
+        elseif opcode_name == "RETURN" then
+            if close_upvalues then
+                table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_close, A));
+            end
+            table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_return, A, B));
+        elseif opcode_name == "CLOSE" then
+            table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_close, A));
+        else
+            error('UNREGISTERED OPCODE USED: '..opcode_name)
+        end
+
+        at = at + 1;
+    end
+
+    for _,rel in pairs(relocations) do
+
+        if new_sizes[rel.to_index] and new_sizes[rel.from_index] then
+            local dist = new_sizes[rel.to_index] - new_sizes[rel.from_index];
+            dist = dist + rel.shift;
+
+            --print(string.format("New distance for %08X --> %i", rbxProto.code[rel.real_code_index], dist));
+            rbxProto.code[rel.real_code_index] = rbx.luau.setarg_sbx(rbxProto.code[rel.real_code_index], dist);
+        else
+            error(string.format("Bad sBx relocation [ %08X, %08X, %i ]", rel.from_index, rel.to_index, #new_sizes));
+        end
+    end
+
+    for i = 1, 3 do
+        if open_reg[i] then
+            rbxProto.maxStackSize = rbxProto.maxStackSize + 1;
+        end
+    end
+
+    rbxProto.sizeCode = #rbxProto.code;
+    rbxProto.lines = #rbxProto.lineInfos;
+
+    return rbxProto;
+end
+
+rbx.dump_function = function(f)
+    local bytecode = {};
+    local protoTable, stringTable = celua.deserialize(f);
+    table.remove(stringTable, 1); -- remove lua string (debug info)
+
+    local mainProtoId = #protoTable;
+    local mainProto = protoTable[mainProtoId];
+
+    local writer do
+        writer = {};
+
+        function writer:writeByte(val)
+            table.insert(bytecode, val);
+        end
+
+        function writer:writeBytes(val)
+            for i = 1,#val do
+                table.insert(bytecode, val[i]);
+            end
+        end
+
+        function writer:writeString(str)
+            for i = 1,string.len(str) do
+                table.insert(bytecode, string.byte(str:sub(i,i)));
+            end
+        end
+
+        function writer:writeInt(val)
+            local bytes = {val & 0xff, (val >> 8) & 0xff, (val >> 16) & 0xff, (val >> 24) & 0xff};
+            writer:writeBytes(bytes);
+        end
+
+        function writer:writeDouble(val)
+            -- wahhh boo hoo this is so "slow" but
+			-- how else can I implement double conversion
+			-- in lua
+            local address = getAddress("USER32.DrawIcon"); -- find a shitty place to write to
+            util.write_double(address, val); -- drop it 
+            local bytes = util.read_bytes(address, 8); -- get the double-encoded bytes
+            writer:writeBytes(bytes);
+        end
+
+        function writer:writeCompressedInt(val)
+            local value = val;
+            repeat
+                local v = (value & 0x7F);
+                value = value >> 7;
+                if not (value <= 0) then v = v | 0x80 end
+                writer:writeByte(v);
+            until (value <= 0)
+        end
+
+    end
+
+    writer:writeByte(1);
+    writer:writeCompressedInt(#stringTable);
+
+    for _,str in pairs(stringTable) do
+        print(string.len(str), str);
+        writer:writeCompressedInt(string.len(str));
+        writer:writeString(str);
+    end
+
+    writer:writeCompressedInt(#protoTable);
+
+    for _,proto in pairs(protoTable) do
+        local rbxProto = rbx.transpile(proto);
+
+        for i,v in pairs(proto.upValueNames) do
+            if v == "_ENV" then
+                proto.nups = proto.nups - 1;
+            end
+        end
+
+        writer:writeByte(rbxProto.maxStackSize);
+        writer:writeByte(proto.numParams);
+        writer:writeByte(proto.nups);
+        writer:writeByte(proto.isVarArg);
+
+        writer:writeCompressedInt(rbxProto.sizeCode);
+
+        for i = 1, rbxProto.sizeCode do
+            --print(string.format("%08X ", rbxProto.code[i]));
+            writer:writeInt(rbxProto.code[i]);
+        end
+
+        writer:writeCompressedInt(proto.sizeConsts);
+
+        for i = 1, proto.sizeConsts do
+            local const = proto.consts[i];
+
+            if const.Type == 0 then
+                writer:writeByte(rbx.luau.const_nil);
+            elseif const.Type == 1 then
+                writer:writeByte(rbx.luau.const_boolean);
+
+				if const.Data == 0 then
+					writer:writeByte(0);
+				else
+					writer:writeByte(1);
+				end
+            elseif const.Type == 3 or const.Type == 0x13 then -- int or double
+                writer:writeByte(rbx.luau.const_number);
+                writer:writeDouble(const.Data or 0);
+            elseif const.Type == 4 or const.Type == 0x14 then -- short string or long string
+                writer:writeByte(rbx.luau.const_string);
+
+                local strId = 1;
+                while strId < #stringTable do
+                    if stringTable[strId] == const.Data then
+                        break;
+                    end
+                    strId = strId + 1;
+                end
+                writer:writeCompressedInt(strId);
+            end
+        end
+
+        writer:writeCompressedInt(proto.numProtos);
+
+        -- map each nested proto to their index
+        -- as they appear in the prototable
+        for protoId = 1, #protoTable do
+            for nestedId = 1, #proto.protos do
+                if proto.protos[nestedId] == protoTable[protoId] then
+                    writer:writeCompressedInt(protoId - 1);
+                end
+            end
+        end
+
+        writer:writeByte(0); -- function/source string id
+
+        writer:writeByte(0); -- line info
+        writer:writeByte(0); -- debug info
+    end
+
+    writer:writeCompressedInt(mainProtoId - 1);
+
+    return bytecode;
+end
+
+retcheck = {};
 retcheck.routine = 0;
-retcheck.pointer = 0;
+retcheck.redirect = 0;
+retcheck.patches = {};
 
 retcheck.load = function()
     retcheck.routine = util.aobscan("5DFF25????????CC")[1] + 1;
-    retcheck.pointer = readInteger(retcheck.routine + 2);
+    retcheck.redirect = util.read_int32(retcheck.routine + 2);
 end
-
-retcheck.load();
 
 retcheck.patch = function(address)
-    local func_start = address;
-    local func_end = util.next_prologue(func_start + 16);
-    local func_size = func_end - func_start;
+    local function_start = address;
+    local function_end = util.next_prologue(function_start + 16);
+    local function_size = function_end - function_start;
 
-    local mod = allocateMemory(1024);
-    local loc_prev_eip = mod + 0x200;
-    local ptr_start = mod + 0x204;
+    local patch = util.allocate_memory(1024);
+    table.insert(retcheck.patches, patch);
 
-    local has_prologue = true; -- assume it is not naked func
-    local prologue_reg = util.read_byte(func_start) % 8;
-    func_start = func_start + 3;
-    writeInteger(ptr_start, func_start);
+    local function_is_naked = false; -- assumption
 
-    local b1 = util.int_to_bytes(loc_prev_eip);
-    local b2 = util.int_to_bytes(retcheck.routine);
-    local b3 = util.int_to_bytes(mod + 0x25);
-    local b4 = util.int_to_bytes(retcheck.pointer);
-    local b5 = util.int_to_bytes(ptr_start);
+    local reg_prologue = util.read_byte(function_start) % 8;
+    function_start = function_start + 3;
+
+    local bytes_redirect = util.int_to_bytes(retcheck.redirect);
+    local bytes_routine = util.int_to_bytes(retcheck.routine);
+    local bytes_old_redirect = util.int_to_bytes(patch + 0x200);
+    local bytes_old_return = util.int_to_bytes(patch + 0x204);
+    local bytes_return = util.int_to_bytes(patch + 0x2E);
+    local bytes_patch = util.int_to_bytes(patch);
+    local bytes_jmp_function = util.int_to_bytes(function_start - (patch + 0x2E));
 
     local patch_bytes = {
-        0x50 + prologue_reg,			-- push ebp
-        0x8B, 0xC4 + (prologue_reg * 8), 	-- mov ebp,esp
-	0x50, 					-- push eax
-	0x8B, 0x40 + prologue_reg, 0x04,	-- mov eax,[ebp+4]
-	0xA3, b1[3], b1[2], b1[1], b1[0],	-- mov [prev_eip],eax
-	0xB8, b2[3], b2[2], b2[1], b2[0],	-- mov eax, retcheck.routine
-	0x89, 0x40 + prologue_reg, 0x04,	-- mov [ebp+4], eax
-	0xB8, b3[3], b3[2], b3[1], b3[0],	-- mov eax, (mod + 0x25)
-	0xA3, b4[3], b4[2], b4[1], b4[0],	-- mov [retcheck.pointer], eax
-	0x58,					-- pop eax
-	0xFF, 0x25, b5[3], b5[2], b5[1], b5[0],	-- jmp dword ptr [->func_start]
-	0xFF, 0x25, b1[3], b1[2], b1[1], b1[0] 	-- jmp dword ptr [previous eip]
-    }
+        0x50 + reg_prologue,		-- push ebp
+        0x8B,				-- mov ebp,esp
+        0xC4 + (reg_prologue * 8),
+        0x50,				-- push eax
+        0xA1,				-- mov eax, [redirect]
+        bytes_redirect[1],
+        bytes_redirect[2],
+        bytes_redirect[3],
+        bytes_redirect[4],
+        0xA3,				-- mov [loc_old_redirect], eax
+        bytes_old_redirect[1],
+        bytes_old_redirect[2],
+        bytes_old_redirect[3],
+        bytes_old_redirect[4],
+        0x8B,				-- mov eax, [ebp+4]
+        0x40 + reg_prologue,
+        0x04,
+        0xA3,				-- mov [old_ebp], eax
+        bytes_old_return[1],
+        bytes_old_return[2],
+        bytes_old_return[3],
+        bytes_old_return[4],
+        0xB8,				-- mov eax, routine
+        bytes_routine[1],
+        bytes_routine[2],
+        bytes_routine[3],
+        bytes_routine[4],
+        0x89,				-- mov [ebp+4], eax
+        0x40 + reg_prologue,
+        0x04,
+        0xB8,				-- mov eax, return_location
+        bytes_return[1],
+        bytes_return[2],
+        bytes_return[3],
+        bytes_return[4],
+        0xA3,				-- mov [redirect], eax
+        bytes_redirect[1],
+        bytes_redirect[2],
+        bytes_redirect[3],
+        bytes_redirect[4],
+        0x58,				-- pop eax
+        0xE9, 				-- jmp func_start
+        bytes_jmp_function[1],
+        bytes_jmp_function[2],
+        bytes_jmp_function[3],
+        bytes_jmp_function[4],
+        0x57, 				-- push edi
+        0x8B,				-- mov edi, [loc_old_redirect]
+        0x3D,
+        bytes_old_redirect[1],
+        bytes_old_redirect[2],
+        bytes_old_redirect[3],
+        bytes_old_redirect[4],
+        0x89,				-- mov [redirect], edi
+        0x3D,
+        bytes_redirect[1],
+        bytes_redirect[2],
+        bytes_redirect[3],
+        bytes_redirect[4],
+        0x5F,				-- pop edi
+        0xFF,				-- jmp dword ptr [old_ebp]
+        0x25,
+        bytes_old_return[1],
+        bytes_old_return[2],
+        bytes_old_return[3],
+        bytes_old_return[4],
+    };
 
-    writeBytes(mod, patch_bytes);
-    return mod;
+    util.write_bytes(patch, patch_bytes);
+
+    print("[Retcheck] Patch: " .. string.format("%08X", patch));
+    return patch;
 end
 
+retcheck.flush = function()
+    for _,v in pairs(retcheck.patches) do
+        util.free_memory(v);
+    end
+end
 
-util.fremote.init();
+rbx.old_script_hook_bytes = {};
+rbx.set_script_hook = function(enabled, our_bytecode, our_bytecode_size)
+    if enabled then
+        rbx.script_hook = rbx.offsets.luau_loadbuffer + 3;
+        local edit_location = util.allocate_memory(1024);
+        local hook_jmp_back = edit_location + 256 + 0;
+        local bytes_jmp_back = util.int_to_bytes(hook_jmp_back);
+        local bytes_bytecode = util.int_to_bytes(our_bytecode);
+        local bytes_bytecode_size = util.int_to_bytes(our_bytecode_size);
+        local hook_size = 0;
+
+        util.write_int32(hook_jmp_back, rbx.script_hook + 5);
+
+        while hook_size < 5 do
+            hook_size = hook_size + util.get_code_size(rbx.script_hook + hook_size);
+        end
+
+        rbx.old_script_hook_bytes = util.read_bytes(rbx.script_hook, hook_size);
+
+        local bytes1 = {
+            0xC7, 0x43, 0x08, -- mov [ebx+C], our_bytecode
+            bytes_bytecode[1], bytes_bytecode[2], bytes_bytecode[3], bytes_bytecode[4],
+            0xC7, 0x43, 0x0C, -- mov [ebx+C], our_bytecode_size
+            bytes_bytecode_size[1], bytes_bytecode_size[2], bytes_bytecode_size[3], bytes_bytecode_size[4],
+        }
+
+        for _,b in pairs(rbx.old_script_hook_bytes) do
+            table.insert(bytes1, b);
+        end
+
+        local bytes2 = {
+            0xFF, 0x25,
+            bytes_jmp_back[1], bytes_jmp_back[2], bytes_jmp_back[3], bytes_jmp_back[4]
+        }
+
+        for _,b in pairs(bytes2) do
+            table.insert(bytes1, b);
+        end
+
+        util.write_bytes(edit_location, bytes1);
+        util.place_jmp(rbx.script_hook, edit_location);
+    else
+        util.write_bytes(rbx.script_hook, rbx.old_script_hook_bytes);
+    end
+end
+
+rbx.execute_script = function(src)
+    return rbx.execute_closure(loadstring(src))
+end
+
+rbx.execute_closure = function(closure)
+    local execute_start = os.clock();
+    local script_bytes = rbx.dump_function(closure);
+
+	-- RELAY THE BYTECODE FOR DEBUGGING
+	--[[
+    local str = "";
+    for _,b in pairs(script_bytes) do
+        str = str .. string.format("%02X ", b);
+    end
+    print(str);
+    error''
+	]]
+
+    local our_bytecode_size = #script_bytes;
+    local our_bytecode = util.allocate_memory(our_bytecode_size + 0x10);
+
+    util.write_bytes(our_bytecode, script_bytes);
+    util.write_int32(our_bytecode + our_bytecode_size + (4 - (our_bytecode_size % 4)) + 4, our_bytecode_size);
+
+    rbx.set_script_hook(true, our_bytecode, our_bytecode_size);
+    rbx.functions.sc_runscript(rbx.script_context, rbx.local_script, rbx.functions.get_instance_source(rbx.local_script), 7, 0, 0, 0, 0, 0, 0, 0, 0);
+    rbx.set_script_hook(false);
+
+    print(string.format("[Execute] Took %f seconds", os.clock() - execute_start))
+end
+
+-- Load time can be greatly improved by saving the
+-- offsets to a file and loading them from there
+loader.start = function()
+    print("[Loader] Finding return mask...");
+    retcheck.load();
+
+    print("[Loader] Getting offsets...");
+
+    rbx.offsets.luau_loadbuffer = util.aobscan("0F????83??7FD3??83")[10];
+    --print("luaU_loadbuffer: " .. string.format("%08X", rbx.offsets.luau_loadbuffer));
+	if rbx.offsets.luau_loadbuffer == 0 then
+		error'[Loader] Scan failed [Offset #1]'
+	end
+	rbx.offsets.luau_loadbuffer = util.get_prologue(rbx.offsets.luau_loadbuffer);
+
+    rbx.offsets.sc_runscript = util.scan_xrefs("Running Script")[1];
+    --print("scriptContext_runScript: " .. string.format("%08X", rbx.offsets.sc_runscript));
+	if rbx.offsets.sc_runscript == 0 then
+		error'[Loader] Scan failed [Offset #2]'
+	end
+	rbx.offsets.sc_runscript = util.get_prologue(rbx.offsets.sc_runscript);
+
+    fremote = util.new_remote();
+    print("[Remote] Created remote");
 
 
-if (dump_bytecode) then
-    local scr_hook = allocateMemory(1024);
-    local ptr_bytecode = scr_hook + 0x200;
-    local ptr_bytecode_size = scr_hook + 0x204;
+    local replicator_hook = util.aobscan("252E3266204B422F")[1]; -- this will last a while
+    replicator_hook = util.aobscan(util.int_to_le_str(replicator_hook))[1];
+    replicator_hook = util.get_prologue(replicator_hook) + 3;
+    print(string.format("Replicator hook: %08X", replicator_hook))
 
+    -- place an incredibly fast hook to read ecx
+    -- register (contains ClientReplicator)
+    local detour = util.new_detour(replicator_hook, "ecx", 0, 1);
+    local detour_results = detour.start();
 
-    autoAssemble(util.int_to_str(scr_hook)..[[:
-    push ebx
-    mov ebx,esp
-    sub esp,8
-    push eax
-    mov eax,[ebx+8]
-    mov []]..util.int_to_str(ptr_bytecode)..[[],eax
-    mov eax,[ebx+C]
-    mov []]..util.int_to_str(ptr_bytecode_size)..[[],eax
-    pop eax
-    jmp ]]..util.int_to_str(rluau_loadbuffer + 6)..[[
+    rbx.client_replicator = detour_results.value;
+    rbx.network_client = 0;
 
-    ]]..util.int_to_str(rluau_loadbuffer)..[[:
-    jmp ]]..util.int_to_str(scr_hook)..[[
-    ]])
+    rbx.offsets.instance_name = 0;
+    rbx.offsets.instance_parent = 0;
+    rbx.offsets.instance_children = 0;
 
-    print("Waiting for a script to run...hurry before kick")
+    print("ClientReplicator: " .. string.format("%08X", rbx.client_replicator));
 
-    while (readInteger(ptr_bytecode) == 0 and readInteger(ptr_bytecode_size) == 0) do
-        sleep(1);
+    for i = 16, 128, 4 do
+        local ptr = util.read_int32(rbx.client_replicator + i);
+        if util.read_int64(ptr + 0x10) == 0x0000001F00000010 then
+            print("Instance Name offset: " .. string.format("%08X", i));
+            rbx.offsets.instance_name = i;
+            break;
+        end
     end
 
-    print("Bytecode: " .. util.int_to_str(readInteger(ptr_bytecode)));
-    print("Bytecode size: " .. tostring(readInteger(ptr_bytecode_size)));
+    for i = 16, 128, 4 do
+        rbx.network_client = util.read_int32(rbx.client_replicator + i);
+        if util.read_string(util.read_int32(rbx.network_client + rbx.offsets.instance_name)) == "NetworkClient" then
+            print("Instance Parent offset: " .. string.format("%08X", i));
+            rbx.offsets.instance_parent = i;
 
-    local lbi_check = readInteger(ptr_bytecode_size) > 0x4000;
-    -- you can remove this check if youd like
-
-    if(lbi_check and readInteger(ptr_bytecode_size) < 0x100000) then
-
-        local data = readBytes(readInteger(ptr_bytecode), readInteger(ptr_bytecode_size), true);
-
-        local output = io.open(output_file, "wb");
-        output:write(string.char(unpack(data)));
-        output:close();
-
-        print'Wrote binary to file'
+            print("NetworkClient: " .. string.format("%08X", rbx.network_client));
+            break;
+        end
     end
 
-    return;
-end
+    for i = 16, 128, 4 do
+        local children_ptr = util.read_int32(rbx.network_client + i);
+        if children_ptr then
+            local children_start = util.read_int32(children_ptr + 0);
+            local children_end = util.read_int32(children_ptr + 4);
 
-
-print("loading functions");
-
--- update our functions to a standard __stdcall
---
-rluau_loadbuffer = util.fremote.add(retcheck.patch(rluau_loadbuffer), "fastcall", 5);
-rluab_pcall = util.fremote.add(retcheck.patch(rluab_pcall), "cdecl", 1);
-rluae_newthread = util.fremote.add(rluae_newthread, "thiscall", 1);
-
-print("new deserialize: "  .. util.int_to_str(rluau_loadbuffer));
-print("new spawn: "        .. util.int_to_str(rluab_pcall));
-print("new newthread: "    .. util.int_to_str(rluae_newthread));
-
-
-
-
-
-local chunk_name = ls_hook_to - 0x40; -- use existing memory
-writeString(chunk_name, "=Script1");
-writeInteger(chunk_name + 12, 8);
-
-
-local http = getInternet()
-local bytecode_fetch = http.getURL("https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/bytecode_example.bin")
-http.destroy()
-
-local bytecode_size = string.len(bytecode_fetch);
-local bytecode = allocateMemory(bytecode_size);
-
-for at = 1, bytecode_size do
-	local i = at - 1;
-	writeBytes(bytecode + i, {bytecode_fetch:byte(at,at)});
-end
-
-writeInteger(bytecode + bytecode_size + 4 + (bytecode_size % 4), bytecode_size);
-
-
-print(util.int_to_str(bytecode))
-print(util.int_to_str(bytecode_size))
-
-
-
--- Place the lua state hook
-writeInteger(ls_hook_ptr, ls_hook_to);
-local hookb = util.int_to_bytes(ls_hook_ptr)
-writeBytes(ls_hook_from, { 0xFF, 0x25, hookb[3], hookb[2], hookb[1], hookb[0] });
-
-
--- wait for lua state
-t = createTimer(nil)
-
-function checkHook(timer)
-    if (rL == 0) then
-        -- occur one time
-        rL = readInteger(trace_loc);
-        if (rL ~= 0) then
-            timer_setEnabled(t, false);
-
-            -- restore lua state hook bytes
-            writeBytes(ls_hook_from, { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08 });
-
-            rL = util.fremote.call(rluae_newthread, { rL }).ret32;
-            print("Lua state: " ..util.int_to_str(rL));
-
-            local status = util.fremote.call(rluau_loadbuffer, { rL, chunk_name, bytecode, bytecode_size, 0 }).ret32;
-            if (status == 0) then
-                util.fremote.call(rluab_pcall, { rL });
-            else
-                print("Bytecode error")
+            if children_start and children_end then
+                --local children_index = 1
+                --if util.read_int32(children_start + ((children_index - 1) * 8) + 0) == rbx.client_replicator then
+                if (children_end - children_start == 8) then -- faster solution
+                    print("Instance Children offset: " .. string.format("%08X", i));
+                    rbx.offsets.instance_children = i;
+                    break;
+                end
             end
         end
     end
+
+    rbx.functions.get_instance_name = function(instance)
+        local ptr = util.read_int32(instance + rbx.offsets.instance_name);
+        if ptr then
+            local fl = util.read_int32(ptr + 0x14);
+            if fl == 0x1F then
+                ptr = util.read_int32(ptr);
+            end
+            return util.read_string(ptr);
+        else
+            return "???";
+        end
+    end
+
+    rbx.functions.get_instance_parent = function(instance)
+        return util.read_int32(instance + rbx.offsets.instance_parent);
+    end
+
+    rbx.functions.get_instance_source = function(instance)
+        return util.read_int32(instance + 8);
+    end
+
+    rbx.functions.get_instance_children = function(instance)
+        local instances = {};
+        local children_ptr = util.read_int32(instance + rbx.offsets.instance_children);
+        if children_ptr then
+            local children_start = util.read_int32(children_ptr + 0);
+            local children_end = util.read_int32(children_ptr + 4);
+            local at = children_start;
+            while at < children_end do
+                local child = util.read_int32(at);
+                table.insert(instances, child);
+                at = at + 8;
+            end
+        end
+        return instances;
+    end
+
+    rbx.functions.find_first_child = function(instance, name)
+        for _,v in pairs(rbx.functions.get_instance_children(instance)) do
+            if rbx.functions.get_instance_name(v) == name then
+                return v;
+            end
+        end
+        return 0;
+    end
+
+    rbx.data_model = rbx.functions.get_instance_parent(rbx.network_client);
+    print("DataModel: " .. string.format("%08X", rbx.data_model));
+
+    rbx.script_context = rbx.functions.find_first_child(rbx.data_model, "Script Context");
+    if not rbx.script_context then
+       error'Could not locate Script Context'
+    end
+    print("ScriptContext: " .. string.format("%08X", rbx.script_context));
+
+    rbx.local_player = 0;
+    rbx.players_service = rbx.functions.find_first_child(rbx.data_model, "Players");
+    if not rbx.players_service then
+       error'Could not locate Players'
+    end
+
+    print("Players: " .. string.format("%08X", rbx.players_service));
+
+    for i = 32, 1600, 4 do
+        local instance = util.read_int32(rbx.players_service + i);
+        if instance then
+           if rbx.functions.get_instance_parent(instance) == rbx.players_service then
+               rbx.local_player = instance;
+               print("Players->LocalPlayer offset: " .. string.format("%08X", i));
+               print("Players->LocalPlayer: " .. string.format("%08X", rbx.local_player));
+               rbx.offsets.players_localplayer = i;
+           end
+        end
+    end
+
+    if not rbx.local_player then
+       error'Could not find LocalPlayer'
+    end
+
+    print("Player name: ", rbx.functions.get_instance_name(rbx.local_player));
+
+    -- sure, I could deal with updating more offsets to
+    -- make a new localscript _or_ just overwrite an existing one
+    rbx.local_player_scripts = rbx.functions.find_first_child(rbx.local_player, "PlayerScripts");
+    rbx.local_script = rbx.functions.find_first_child(rbx.local_player_scripts, "RbxCharacterSounds");
+
+    if not rbx.local_script then
+        rbx.local_script = rbx.functions.find_first_child(rbx.local_player_scripts, "BubbleChat");
+    end
+
+    if not rbx.local_script then
+        error("Could not find a usable LocalScript (we're trying to be resourceful here)")
+    end
+
+    print("LocalScript: " .. string.format("%08X", rbx.local_script));
+
+
+
+    fremote.init();
+    print("[Remote] Controller: " .. string.format("%08X", fremote.remote_location));
+
+    print(string.format("[Loader] Took %f seconds", os.clock() - loader.clock_start))
+
+    rbx.functions.luau_loadbuffer = fremote.create(retcheck.patch(rbx.offsets.luau_loadbuffer), "fastcall", 5);
+    print("[Remote] Added routine: " .. string.format("%08X", fremote.routines[#fremote.routines]));
+
+    rbx.functions.sc_runscript = fremote.create(retcheck.patch(rbx.offsets.sc_runscript), "thiscall", 84);
+    print("[Remote] Added routine: " .. string.format("%08X", fremote.routines[#fremote.routines]));
+    fremote.start();
+
+
+    loader.loaded = true;
 end
 
-timer_setInterval(t, 10);
-timer_onTimer(t, checkHook);
-timer_setEnabled(t, true);
+rbx.start = function()
+    rbx.execute_closure(rbx_main);
+    --rbx.execute_script(start_script);
+
+    --retcheck.flush();
+    --fremote.flush();
+end
+
+
+-- Load everything needed for this exploit
+loader.start();
+
+if loader.loaded then
+    rbx.start();
+end
+
+
+
+
