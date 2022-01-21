@@ -1,58 +1,36 @@
-# LATEST UPDATE -- PLEASE READ
+# UPDATED!!!!! WORKING AS OF 1/21/22
 
-After a long duration of side projects, I'm coming back to redo this completely.
+After a long duration of side projects, I've come back to redo this completely.
 
-I intend to do full scale execution with custom environments using nothing more than cheat engine's Lua Engine,
-and on top of that, all of it will operate externally.
-I'm going to use every capability that cheat engine has to offer to prove it is still perfectly useful and on-par with today's exploiting standards.
+In order to run scripts using nothing other than Cheat Engine's own Lua Engine,
+you only have to run 1 script -- executor.lua
+
+Go into Memory View and hit Ctrl+L or Tools --> Lua Engine
+and paste the script there.
+
+Make any modifications you want to the "rbx_main()" function in executor.lua
+which is plainly visible, among the first couple lines.
+If you know lua, this should be easy.
+
+Everything in that function will get executed INSIDE ROBLOX.
+Now, please note this is still a work in progress and it DOES NOT SUPPORT BIG SCRIPTS YET
+
+It should run most small scripts for now.
+As always, enjoy :))
 
 
 
 # UNDETECTED CHEAT ENGINE WHEN??
 
 Right now! That's when.
-Simply install Cheat Engine 7.1 from the official website - https://www.cheatengine.org/downloads.php
-You may have to look around for version 7.1, but make sure it is that version.
-Once you installed, download CeleryEngine.exe from this repo, and drop this into the installed cheat engine folder -- the same place that the real cheatengine exe is located.
+Simply install Cheat Engine from the official website - https://www.cheatengine.org/downloads.php
+You may have to look around for version 7.4, but make sure it is that version.
+Once you installed Cheat Engine, download CeleryEngine.exe from this repo, and drop this into the installed cheat engine folder -- the same place that the real cheatengine exe is located.
 Now, run CeleryEngine.exe INSTEAD and make your settings look exactly like the images linked in this repo.
 You should be able to use cheat engine undetected now.
 
+# NOTICE
 
+DONT use 'Open Cheat Table' for executing the lua script
 
-
-# SCRIPT EXECUTOR GUIDE (OUTDATED - DO NOT ATTEMPT)
-
-Open Cheat Engine.
-Hit Memory View.
-Press Ctrl+Alt+L, Or Ctrl+L.
-Or go to Tools-->Lua Engine.
-
-DO NOT RUN FROM THE CHEAT TABLE...IF THE BUTTON SAYS "Execute Script" UR AT THE WRONG THING.
-It should only say "Execute"
-
-
-Paste everything from script_executor.lua into the text field.
-
-Hit "Execute".
-
-If it loaded up properly, you will see a message in the Dev Console in ROBLOX
-saying "Loaded"
-Now you can execute lua scripts in your chat bar, like so:
-
-c/print("hello, world!");
-
-c/game.Players.LocalPlayer.Character.Head:Destroy()
-
-...
-
-
-# ISSUES
-
-If you're getting kicked at all for using cheat engine, change your cheat engine settings 
-to match the 3 screenshots I uploaded here.
-Make sure they're as close as possible to the pictures.
-And DONT use 'Open Cheat Table' for executing lua scripts
-
-That is all.
-
-Enjoy :)
+That is all. :)
