@@ -180,7 +180,7 @@ celua.deserialize = function(func)
         for i = 1, thisProto.sizeConsts do
             local const = {};
             const.Type = reader:nextByte();
-            print("Constant type: ", const.Type);
+            --print("Constant type: ", const.Type);
 
             if const.Type == 0 then -- nil
                 -- nothing
@@ -197,7 +197,7 @@ celua.deserialize = function(func)
 				const.Data = reader:nextString(const.Length);
                 --print(const.Data);
             else
-                print(string.format("invalid constant type: %08X", const.Type));
+                error(string.format("invalid constant type: %08X", const.Type));
             end
 
             table.insert(thisProto.consts, const);
