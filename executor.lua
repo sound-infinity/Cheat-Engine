@@ -2,8 +2,7 @@ assert(_VERSION ~= "5.3", "Lua 5.3 expected");
 
 -- this function runs inside ROBLOX
 function rbx_main()
-spawn(function()
-			
+    spawn(function()
 local FlingKill = Instance.new("ScreenGui")
 local Main = Instance.new("Frame")
 local Label = Instance.new("Frame")
@@ -205,10 +204,8 @@ power = power - 100
 game.Players.LocalPlayer.Number.Value = game.Players.LocalPlayer.Number.Value - 1
 CurrentPower.Text = "Current Power = " .. game.Players.LocalPlayer.Number.Value
 end)
-			
-end)
+    end)
 end
-
 
 
 function load_api(name)
@@ -764,6 +761,7 @@ rbx.transpile = function(proto)
         end
     end
 
+	--[[
 	for i = 1, #rbxProto.code do
 		local bytes = util.int_to_bytes(rbxProto.code[i]);
 		local Opcode = bytes[1];
@@ -772,6 +770,7 @@ rbx.transpile = function(proto)
 		local C = bytes[4];
 		print(string.format("ROBLOX Opcode: %02X %02X %02X %02X", Opcode, A, B, C));
 	end
+	]]
 
     for i = 1, 3 do
         if open_reg[i] then
@@ -1097,11 +1096,13 @@ rbx.execute_closure = function(closure)
     local script_bytes = rbx.dump_function(closure);
 
 	-- RELAY THE BYTECODE FOR DEBUGGING
+	--[[
     local str = "";
     for _,b in pairs(script_bytes) do
         str = str .. string.format("%02X ", b);
     end
     print(str);
+	]]
     --error''
 
     local our_bytecode_size = #script_bytes;
