@@ -130,14 +130,12 @@ celua.deserialize = function(func)
         end
 
         function reader:nextDouble()
-            local b = {};
-            for i = 1,8 do
-                table.insert(b, reader:nextByte());
-            end
-			-- this method is so shit but it saves me time 
-            local address = getAddress("USER32.DrawIcon"); -- find a shitty place to write to
-			util.write_bytes(address, b); -- write the double-encoded bytes
-			return util.read_double(address); -- read the actual double value
+			local str = '';
+			for i = 1,8 do
+				str = str .. string.char(reader:nextByte());
+			end
+			local value = string.unpack("<d", str);
+			return value;
         end
 
         function reader:nextInt64()
@@ -193,8 +191,10 @@ celua.deserialize = function(func)
             elseif const.Type == 4 then -- string
                 const.Data, const.Length = reader:nextString();
             elseif const.Type == 0x14 then -- string
-                const.Length = reader:nextInt();
-				const.Data = reader:nextString(const.Length);
+                const.Data, const.Length = reader:nextString();
+				
+                --const.Length = reader:nextInt();
+				--const.Data = reader:nextString(const.Length);
                 --print(const.Data);
             else
                 error(string.format("invalid constant type: %08X", const.Type));
