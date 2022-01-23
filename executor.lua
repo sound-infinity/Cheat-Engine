@@ -1,211 +1,99 @@
 assert(_VERSION ~= "5.3", "Lua 5.3 expected");
 
--- this function runs inside ROBLOX
-function rbx_main()
-    spawn(function()
-local FlingKill = Instance.new("ScreenGui")
-local Main = Instance.new("Frame")
-local Label = Instance.new("Frame")
-local Shadow = Instance.new("Frame")
-local StartKill = Instance.new("TextButton")
-local StopKill = Instance.new("TextButton")
-local Instructions = Instance.new("TextLabel")
-local CurrentPower = Instance.new("TextLabel")
-local Recomendation = Instance.new("TextLabel")
-local NameOfGui = Instance.new("TextLabel")
-local Exit = Instance.new("TextButton")
-local UPArrow = Instance.new("TextButton")
-local DownArrow = Instance.new("TextButton")
- 
--- Properties
- 
-FlingKill.Name = "Fling/Kill"
-FlingKill.Parent = game.CoreGui
- 
-Main.Name = "Main"
-Main.Parent = FlingKill
-Main.BackgroundColor3 = Color3.new(0.92549, 0.941177, 0.945098)
-Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.702554762, 0, 0.446640313, 0)
-Main.Size = UDim2.new(0, 217, 0, 233)
-Main.Selectable = true
-Main.Active = true
-Main.Draggable = true
- 
-Label.Name = "Label"
-Label.Parent = Main
-Label.BackgroundColor3 = Color3.new(0.741176, 0.764706, 0.780392)
-Label.BorderSizePixel = 0
-Label.Size = UDim2.new(0, 217, 0, 27)
- 
-Shadow.Name = "Shadow"
-Shadow.Parent = Main
-Shadow.BackgroundColor3 = Color3.new(0.67451, 0.694118, 0.705882)
-Shadow.BorderSizePixel = 0
-Shadow.Position = UDim2.new(0, 0, 0.115879826, 0)
-Shadow.Size = UDim2.new(0, 217, 0, 9)
- 
-StartKill.Name = "StartKill"
-StartKill.Parent = Main
-StartKill.BackgroundColor3 = Color3.new(0.741176, 0.764706, 0.780392)
-StartKill.BorderSizePixel = 0
-StartKill.Position = UDim2.new(0.195852548, 0, 0.227467805, 0)
-StartKill.Size = UDim2.new(0, 126, 0, 23)
-StartKill.Font = Enum.Font.Cartoon
-StartKill.Text = "FE Kill/Fling"
-StartKill.TextColor3 = Color3.new(0, 0, 0)
-StartKill.TextSize = 14
- 
-StopKill.Name = "StopKill"
-StopKill.Parent = Main
-StopKill.BackgroundColor3 = Color3.new(0.741176, 0.764706, 0.780392)
-StopKill.BorderSizePixel = 0
-StopKill.Position = UDim2.new(0.207373276, 0, 0.38197428, 0)
-StopKill.Size = UDim2.new(0, 124, 0, 23)
-StopKill.Font = Enum.Font.Cartoon
-StopKill.Text = "Stop FE Kill/Fling"
-StopKill.TextColor3 = Color3.new(0, 0, 0)
-StopKill.TextSize = 14
- 
-Instructions.Name = "Instructions"
-Instructions.Parent = Main
-Instructions.BackgroundColor3 = Color3.new(1, 1, 1)
-Instructions.BackgroundTransparency = 1
-Instructions.Position = UDim2.new(0.0391705073, 0, 0.549356222, 0)
-Instructions.Size = UDim2.new(0, 200, 0, 32)
-Instructions.Font = Enum.Font.Cartoon
-Instructions.Text = "Just touch someone to watch the fly to their death!"
-Instructions.TextColor3 = Color3.new(0, 0, 0)
-Instructions.TextSize = 14
-Instructions.TextWrapped = true
- 
-CurrentPower.Name = "CurrentPower"
-CurrentPower.Parent = Main
-CurrentPower.BackgroundColor3 = Color3.new(1, 1, 1)
-CurrentPower.BackgroundTransparency = 1
-CurrentPower.Position = UDim2.new(0.276497692, 0, 0.686695278, 0)
-CurrentPower.Size = UDim2.new(0, 98, 0, 36)
-CurrentPower.Font = Enum.Font.Cartoon
-CurrentPower.Text = "Current Power = 5"
-CurrentPower.TextColor3 = Color3.new(0, 0, 0)
-CurrentPower.TextSize = 14
- 
-Recomendation.Name = "Recomendation"
-Recomendation.Parent = Main
-Recomendation.BackgroundColor3 = Color3.new(1, 1, 1)
-Recomendation.BackgroundTransparency = 1
-Recomendation.Position = UDim2.new(0.0414746553, 0, 0.884120166, 0)
-Recomendation.Size = UDim2.new(0, 200, 0, 21)
-Recomendation.Font = Enum.Font.Cartoon
-Recomendation.Text = "Recommended Power is 5"
-Recomendation.TextColor3 = Color3.new(0, 0, 0)
-Recomendation.TextSize = 14
- 
-NameOfGui.Name = "NameOfGui"
-NameOfGui.Parent = Main
-NameOfGui.BackgroundColor3 = Color3.new(1, 1, 1)
-NameOfGui.BackgroundTransparency = 1
-NameOfGui.Position = UDim2.new(0.0806451589, 0, 0, 0)
-NameOfGui.Size = UDim2.new(0, 154, 0, 27)
-NameOfGui.Font = Enum.Font.Cartoon
-NameOfGui.Text = "FE Kill/Fling By CowAnim8s"
-NameOfGui.TextColor3 = Color3.new(0, 0, 0)
-NameOfGui.TextSize = 14
- 
-Exit.Name = "Exit"
-Exit.Parent = Main
-Exit.BackgroundColor3 = Color3.new(1, 1, 1)
-Exit.BackgroundTransparency = 1
-Exit.Position = UDim2.new(0.907834113, 0, 0, 0)
-Exit.Size = UDim2.new(0, 20, 0, 27)
-Exit.Font = Enum.Font.Cartoon
-Exit.Text = "X"
-Exit.TextColor3 = Color3.new(0, 0, 0)
-Exit.TextSize = 14
- 
-UPArrow.Name = "UPArrow"
-UPArrow.Parent = Main
-UPArrow.BackgroundColor3 = Color3.new(1, 1, 1)
-UPArrow.BackgroundTransparency = 1
-UPArrow.Position = UDim2.new(0.0783410147, 0, 0.716738224, 0)
-UPArrow.Size = UDim2.new(0, 26, 0, 23)
-UPArrow.Font = Enum.Font.Cartoon
-UPArrow.Text = "Up"
-UPArrow.TextColor3 = Color3.new(0, 0, 0)
-UPArrow.TextSize = 12
-UPArrow.TextWrapped = true
- 
-DownArrow.Name = "DownArrow"
-DownArrow.Parent = Main
-DownArrow.BackgroundColor3 = Color3.new(1, 1, 1)
-DownArrow.BackgroundTransparency = 1
-DownArrow.Position = UDim2.new(0.792626739, 0, 0.714592278, 0)
-DownArrow.Size = UDim2.new(0, 26, 0, 23)
-DownArrow.Font = Enum.Font.Cartoon
-DownArrow.Text = "Down"
-DownArrow.TextColor3 = Color3.new(0, 0, 0)
-DownArrow.TextSize = 12
-DownArrow.TextWrapped = true
- 
-power = 500
-active = false
-local val = Instance.new("IntValue")
-val.Name = "Number"
-val.Parent = game.Players.LocalPlayer
-val.Value = 5
- 
-Exit.MouseButton1Click:connect(function()
-FlingKill.Enabled = false
-end)
- 
-StartKill.MouseButton1Click:connect(function()
-game:GetService('RunService').Stepped:connect(function()
-if game.Players.LocalPlayer.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
-print(game.Players.LocalPlayer.Character.Humanoid.RigType)
-game.Players.LocalPlayer.Character.Head.CanCollide = false
-game.Players.LocalPlayer.Character.Torso.CanCollide = false
-game.Players.LocalPlayer.Character["Left Leg"].CanCollide = false
-game.Players.LocalPlayer.Character["Right Leg"].CanCollide = false
-else
-warn(game.Players.LocalPlayer.Character.Humanoid.RigType)
-if game.Players.LocalPlayer.Character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
+script_source = [[
+
+repeat wait() until game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:findFirstChild("Torso") and game.Players.LocalPlayer.Character:findFirstChild("Humanoid")
+local mouse = game.Players.LocalPlayer:GetMouse()
+repeat wait() until mouse
+local plr = game.Players.LocalPlayer
+local torso = plr.Character.Torso
+local flying = true
+local deb = true
+local ctrl = {f = 0, b = 0, l = 0, r = 0}
+local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+local maxspeed = 50
+local speed = 0
+
+function Fly()
+    local bg = Instance.new("BodyGyro", torso)
+    bg.P = 9e4
+    bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bg.cframe = torso.CFrame
     
-print(game.Players.LocalPlayer.Character.Humanoid.RigType)
-game.Players.LocalPlayer.Character.Head.CanCollide = false
-game.Players.LocalPlayer.Character.UpperTorso.CanCollide = false
-game.Players.LocalPlayer.Character.LowerTorso.CanCollide = false
-game.Players.LocalPlayer.Character.HumanoidRootPart.CanCollide = false
+    local bv = Instance.new("BodyVelocity", torso)
+    bv.velocity = Vector3.new(0,0.1,0)
+    bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    
+    repeat wait()
+    plr.Character.Humanoid.PlatformStand = true
+    
+    if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
+        speed = speed+.5+(speed/maxspeed)
+        if speed > maxspeed then
+            speed = maxspeed
+        end
+    elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
+        speed = speed-1
+        if speed < 0 then
+            speed = 0
+        end
+    end
+    
+    if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
+        bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+        lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+    elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
+        bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+    else
+        bv.velocity = Vector3.new(0,0.1,0)
+    end
+    
+    local tilt = -math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed);
+    bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(tilt,0,0)
+    until not flying
 
+    ctrl = {f = 0, b = 0, l = 0, r = 0}
+    lastctrl = {f = 0, b = 0, l = 0, r = 0}
+    speed = 0
+    bg:Destroy()
+    bv:Destroy()
+    plr.Character.Humanoid.PlatformStand = false
 end
-end
+
+mouse.KeyDown:connect(function(key)
+    if key:lower() == "e" then
+        if flying then
+            flying = false
+        else
+            flying = true
+            Fly()
+        end
+    elseif key:lower() == "w" then
+        ctrl.f = 1
+    elseif key:lower() == "s" then
+        ctrl.b = -1
+    elseif key:lower() == "a" then
+        ctrl.l = -1
+    elseif key:lower() == "d" then
+        ctrl.r = 1
+    end
 end)
 
-wait(.1)
+mouse.KeyUp:connect(function(key)
+    if key:lower() == "w" then
+        ctrl.f = 0
+    elseif key:lower() == "s" then
+        ctrl.b = 0
+    elseif key:lower() == "a" then
+        ctrl.l = 0
+    elseif key:lower() == "d" then
+        ctrl.r = 0
+    end
+end)
 
-local bambam = Instance.new("BodyThrust")
-bambam.Parent = game.Players.LocalPlayer.Character.HumanoidRootPart
-bambam.Force = Vector3.new(power,0,power)
-bambam.Location = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-end)
- 
-StopKill.MouseButton1Click:connect(function()
-active = false
-game.Players.LocalPlayer.Character.HumanoidRootPart.BodyThrust:Remove()
-end)
- 
-UPArrow.MouseButton1Click:connect(function()
-power = power + 100
-game.Players.LocalPlayer.Number.Value = game.Players.LocalPlayer.Number.Value + 1
-CurrentPower.Text = "Current Power = " .. game.Players.LocalPlayer.Number.Value
-end)
- 
-DownArrow.MouseButton1Click:connect(function()
-power = power - 100
-game.Players.LocalPlayer.Number.Value = game.Players.LocalPlayer.Number.Value - 1
-CurrentPower.Text = "Current Power = " .. game.Players.LocalPlayer.Number.Value
-end)
-    end)
-end
+Fly()
+
+]]
 
 
 function load_api(name)
@@ -219,8 +107,7 @@ loader = {};
 loader.clock_start = os.clock();
 
 -- import my deserializer for lua 5.3
---load_api("api_celua.lua")();
-loadfile("C:/Users/Javan/Desktop/API/api_celua.lua")();
+load_api("api_celua.lua")();
 
 -- import my memory utilities
 load_api("api_util.lua")();
@@ -376,7 +263,6 @@ rbx.code_iabc = function(Op, A, B, C)
 end
 
 
-
 rbx.transpile = function(proto)
     --print("proto sizecode: ", proto.sizeCode);
     --[[if #proto.upValueNames > 0 then
@@ -409,7 +295,7 @@ rbx.transpile = function(proto)
         table.insert(relocations, t);
     end
 
-    table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_initva, 0, proto.numParams));
+    --table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_initva, 0, proto.numParams));
 
     local open_reg_at = 1;
     local at = 1;
@@ -428,11 +314,10 @@ rbx.transpile = function(proto)
         local sBx = Bx + 1;
         if Bx > 0x7FFF and Bx <= 0xFFFF then
             sBx = -(0xFFFF - Bx);
-            sBx = sBx - 1;
         end
 
         table.insert(new_sizes, #rbxProto.code);
-        --print(string.format("Vanilla Opcode: %s %02X %02X %02X", opcode_name, A, B, C));
+        print(string.format("Vanilla Opcode: %s %02X %02X %02X", opcode_name, A, B, C));
 
         local function next_open_reg()
             local slot_index = proto.maxStackSize + (open_reg_at - 1);
@@ -499,7 +384,7 @@ rbx.transpile = function(proto)
             table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_setupval, A, B));
         elseif opcode_name == "SETTABUP" then
             local tname = proto.upValueNames[A + 1];
-			local free_reg = next_open_reg();
+            local free_reg = next_open_reg();
 
             if celua.ISK(C) ~= 0 then
                 local real = celua.INDEXK(C);
@@ -507,20 +392,20 @@ rbx.transpile = function(proto)
                 table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, C, real));
             end
 
-			if not tname or tname == "_ENV" then
+            if not tname or tname == "_ENV" then
                 -- using _ENV? just do roblox SETGLOBAL
                 table.insert(rbxProto.code, rbx.code_ia(rbx.luau.op_setglobal, C));
                 table.insert(rbxProto.code, rbx.code_ip(celua.INDEXK(B)));
-			else
-				if celua.ISK(B) ~= 0 then
-					local real = celua.INDEXK(B);
-					B = next_open_reg();
-					table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, B, real));
-				end
-			
-				table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_getupval, free_reg, A));
-				table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_settable, C, free_reg, B));
-			end
+            else
+                if celua.ISK(B) ~= 0 then
+                    local real = celua.INDEXK(B);
+                    B = next_open_reg();
+                    table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_loadk, B, real));
+                end
+
+                table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_getupval, free_reg, A));
+                table.insert(rbxProto.code, rbx.code_iabc(rbx.luau.op_settable, C, free_reg, B));
+            end
         elseif opcode_name == "GETTABLE" then
             if celua.ISK(C) ~= 0 then
                 local real = celua.INDEXK(C);
@@ -613,16 +498,16 @@ rbx.transpile = function(proto)
             table.insert(rbxProto.code, rbx.code_ip(C));
         elseif opcode_name == "TEST" then -- A C  if not (R(A) <=> C) then pc++
             if C > 0 then
-                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_ntest, A, 1));
-            else
                 table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_test, A, 1));
+            else
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_ntest, A, 1));
             end
         elseif opcode_name == "TESTSET" then -- A B C  if (R(B) <=> C) then R(A) := R(B) else pc++
             -- swap these modes?
             if C > 0 then
-                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_ntest, A, 2));
-            else
                 table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_test, A, 2));
+            else
+                table.insert(rbxProto.code, rbx.code_iasbx(rbx.luau.op_ntest, A, 2));
             end
             table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_move, A, B));
         elseif opcode_name == "SETLIST" then
@@ -663,7 +548,10 @@ rbx.transpile = function(proto)
                 if (opcode_name == "SELF") then
                     proto.code[self_at] = 0; -- dont let this SELF get used again
 
-                    local prev = celua.GETARG_Bx(proto.code[self_at - 1]);
+                    local prev = 0;
+					if self_at - 1 >= 1 then
+					    celua.GETARG_Bx(proto.code[self_at - 1]);
+					end
 
                     table.insert(rbxProto.code, rbx.code_iab(rbx.luau.op_self, celua.GETARG_A(self), celua.GETARG_B(self)));
 
@@ -761,7 +649,7 @@ rbx.transpile = function(proto)
         end
     end
 
-	--[[
+
 	for i = 1, #rbxProto.code do
 		local bytes = util.int_to_bytes(rbxProto.code[i]);
 		local Opcode = bytes[1];
@@ -770,7 +658,7 @@ rbx.transpile = function(proto)
 		local C = bytes[4];
 		print(string.format("ROBLOX Opcode: %02X %02X %02X %02X", Opcode, A, B, C));
 	end
-	]]
+
 
     for i = 1, 3 do
         if open_reg[i] then
@@ -1316,8 +1204,7 @@ loader.start = function()
 end
 
 rbx.start = function()
-    rbx.execute_closure(rbx_main);
-    --rbx.execute_script(start_script);
+    rbx.execute_script('spawn(function() ' .. script_source .. '\nend)');
 
     --retcheck.flush();
     --fremote.flush();
