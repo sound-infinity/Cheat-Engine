@@ -24,10 +24,10 @@ As always, enjoy :))
 
 Right now! That's when.
 Simply install Cheat Engine from the official website - https://www.cheatengine.org/downloads.php
-You may have to look around for version 7.4, but make sure it is that version.
+Download the latest version, or at least 7.0 and up.
 Once you installed Cheat Engine, download CeleryEngine.exe from this repo, and drop this into the installed cheat engine folder -- the same place that the real cheatengine exe is located.
 Now, run CeleryEngine.exe INSTEAD and make your settings look exactly like the images linked in this repo.
-You should be able to use cheat engine undetected now.
+You should be able to use cheat engine fully undetected now.
 
 # NOTICE
 
