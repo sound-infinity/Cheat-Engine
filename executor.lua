@@ -317,7 +317,7 @@ rbx.transpile = function(proto)
         end
 
         table.insert(new_sizes, #rbxProto.code);
-        print(string.format("Vanilla Opcode: %s %02X %02X %02X", opcode_name, A, B, C));
+        --print(string.format("Vanilla Opcode: %s %02X %02X %02X", opcode_name, A, B, C));
 
         local function next_open_reg()
             local slot_index = proto.maxStackSize + (open_reg_at - 1);
@@ -649,7 +649,7 @@ rbx.transpile = function(proto)
         end
     end
 
-
+    --[[
 	for i = 1, #rbxProto.code do
 		local bytes = util.int_to_bytes(rbxProto.code[i]);
 		local Opcode = bytes[1];
@@ -658,6 +658,7 @@ rbx.transpile = function(proto)
 		local C = bytes[4];
 		print(string.format("ROBLOX Opcode: %02X %02X %02X %02X", Opcode, A, B, C));
 	end
+	]]
 
 
     for i = 1, 3 do
@@ -734,7 +735,7 @@ rbx.dump_function = function(f)
     writer:writeCompressedInt(#stringTable);
 
     for _,str in pairs(stringTable) do
-        print(string.len(str), str);
+        --print(string.len(str), str);
         writer:writeCompressedInt(string.len(str));
         writer:writeString(str);
     end
