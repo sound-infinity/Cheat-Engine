@@ -22,12 +22,10 @@ As always, enjoy :))
 
 # UNDETECTED CHEAT ENGINE WHEN??
 
-Right now! That's when.
-Simply install Cheat Engine from the official website - https://www.cheatengine.org/downloads.php
-Download the latest version, or at least 7.0 and up.
-Once you installed Cheat Engine, download CeleryEngine.exe from this repo, and drop this into the installed cheat engine folder -- the same place that the real cheatengine exe is located.
-Now, run CeleryEngine.exe INSTEAD and make your settings look exactly like the images linked in this repo.
-You should be able to use cheat engine fully undetected now.
+............
+After looking into it, I'm probably not allowed to distribute my custom cheat engine here, so please try to look for an alternative such as NOPDE or Check Cashed. Any version of cheat engine should work, if it supports lua 5.3 in the lua engine. There are many cheat engine spoofs out there... if you're really desparate, you can DM me at jayzoinks#8941
+
+
 
 # NOTICE
 
