@@ -1,4 +1,12 @@
-# UPDATED!!!!! WORKING AS OF 1/21/22
+# UPDATE LOG
+
+Just made a quick update, it now uses class names to find the required services.
+
+You can use this to execute scripts in any/every game now.
+
+
+
+# WORKING AS OF 1/21/22
 
 After a long duration of side projects, I've come back to redo this completely.
 
