@@ -2,7 +2,7 @@ assert(_VERSION ~= "5.3", "Lua 5.3 expected");
 
 script_source = [[
 
-repeat wait() until game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:findFirstChild("Humanoid")
+repeat wait() until game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:findFirstChild("Torso") and game.Players.LocalPlayer.Character:findFirstChild("Humanoid")
 local mouse = game.Players.LocalPlayer:GetMouse()
 repeat wait() until mouse
 local plr = game.Players.LocalPlayer
@@ -19,14 +19,14 @@ function Fly()
     bg.P = 9e4
     bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
     bg.cframe = torso.CFrame
-
+    
     local bv = Instance.new("BodyVelocity", torso)
     bv.velocity = Vector3.new(0,0.1,0)
     bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-
+    
     repeat wait()
     plr.Character.Humanoid.PlatformStand = true
-
+    
     if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
         speed = speed+.5+(speed/maxspeed)
         if speed > maxspeed then
@@ -38,7 +38,7 @@ function Fly()
             speed = 0
         end
     end
-
+    
     if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
         bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
         lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
@@ -47,7 +47,7 @@ function Fly()
     else
         bv.velocity = Vector3.new(0,0.1,0)
     end
-
+    
     local tilt = -math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed);
     bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(tilt,0,0)
     until not flying
@@ -92,6 +92,7 @@ mouse.KeyUp:connect(function(key)
 end)
 
 Fly()
+
 
 ]]
 
@@ -1111,6 +1112,24 @@ loader.start = function()
         return util.read_int32(instance + 8);
     end
 
+    rbx.functions.get_instance_descriptor = function(instance)
+        return util.read_int32(instance + 12);
+    end
+
+    rbx.functions.get_instance_class = function(instance)
+        local descriptor = rbx.functions.get_instance_descriptor(instance);
+        local ptr = util.read_int32(descriptor + 4);
+        if ptr then
+            local fl = util.read_int32(ptr + 0x14);
+            if fl == 0x1F then
+                ptr = util.read_int32(ptr);
+            end
+            return util.read_string(ptr);
+        else
+            return "???";
+        end
+    end
+
     rbx.functions.get_instance_children = function(instance)
         local instances = {};
         local children_ptr = util.read_int32(instance + rbx.offsets.instance_children);
@@ -1136,17 +1155,26 @@ loader.start = function()
         return 0;
     end
 
+    rbx.functions.find_first_class = function(instance, classname)
+        for _,v in pairs(rbx.functions.get_instance_children(instance)) do
+            if rbx.functions.get_instance_class(v) == classname then
+                return v;
+            end
+        end
+        return 0;
+    end
+
     rbx.data_model = rbx.functions.get_instance_parent(rbx.network_client);
     print("DataModel: " .. string.format("%08X", rbx.data_model));
 
-    rbx.script_context = rbx.functions.find_first_child(rbx.data_model, "Script Context");
+    rbx.script_context = rbx.functions.find_first_class(rbx.data_model, "ScriptContext");
     if rbx.script_context == 0 then
        error'Could not locate Script Context'
     end
     print("ScriptContext: " .. string.format("%08X", rbx.script_context));
 
     rbx.local_player = 0;
-    rbx.players_service = rbx.functions.find_first_child(rbx.data_model, "Players");
+    rbx.players_service = rbx.functions.find_first_class(rbx.data_model, "Players");
     if rbx.players_service == 0 then
        error'Could not locate Players'
     end
