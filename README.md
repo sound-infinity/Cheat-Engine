@@ -21,10 +21,7 @@ which is plainly visible, among the first couple lines.
 If you know lua, this should be easy.
 
 Everything in that function will get executed INSIDE ROBLOX.
-Now, please note this is still a work in progress and it DOES NOT SUPPORT BIG SCRIPTS YET
-
-It should run most small scripts for now.
-As always, enjoy :))
+Now, please note this is still a work in progress and it DOES NOT SUPPORT BIG SCRIPTS YET.
 
 
 
