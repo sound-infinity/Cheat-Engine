@@ -2,7 +2,7 @@
 
 Just made a quick update, it now uses class names to find the required services.
 
-You can use this to execute scripts in any/every game now.
+You can use this to execute scripts in almost every game now.
 
 
 
@@ -27,8 +27,7 @@ Now, please note this is still a work in progress and it DOES NOT SUPPORT BIG SC
 
 # UNDETECTED CHEAT ENGINE WHEN??
 
-............
-After looking into it, I'm probably not allowed to distribute my custom cheat engine here, so please try to look for an alternative such as NOPDE or Check Cashed. Any version of cheat engine should work, if it supports lua 5.3 in the lua engine. There are many cheat engine spoofs out there... if you're really desparate, you can DM me at jayzoinks#8941
+If you're really desparate, contact me at jayyy#8941
 
 
 
