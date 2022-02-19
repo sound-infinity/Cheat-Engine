@@ -732,7 +732,7 @@ rbx.dump_function = function(f)
 
     end
 
-    writer:writeByte(1);
+    writer:writeByte(2);
     writer:writeCompressedInt(#stringTable);
 
     for _,str in pairs(stringTable) do
@@ -808,6 +808,7 @@ rbx.dump_function = function(f)
             end
         end
 
+        writer:writeCompressedInt(0); -- function line defined
         writer:writeByte(0); -- function/source string id
 
         writer:writeByte(0); -- line info
@@ -1246,7 +1247,6 @@ loader.start();
 if loader.loaded then
     rbx.start();
 end
-
 
 
 
