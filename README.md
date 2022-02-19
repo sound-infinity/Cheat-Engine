@@ -1,5 +1,7 @@
 # UPDATE LOG
 
+added linedefined support
+
 # WORKING AS OF 2/19/22
 
 After a long duration of side projects, I've come back to redo this completely.
