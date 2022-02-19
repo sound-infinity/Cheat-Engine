@@ -1,6 +1,6 @@
 # UPDATE LOG
 
-added linedefined support
+added linedefined support (and wonderfully set it to 0, by default)
 
 # WORKING AS OF 2/19/22
 
