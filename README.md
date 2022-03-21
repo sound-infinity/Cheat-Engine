@@ -1,11 +1,9 @@
 # PLEASE READ
 
 To avoid conflict, you need to make sure you opened the correct roblox process (high memory usage)
-and not the secondary one only used for roblox's AC.
+and not the secondary one only used for roblox's AC (only uses 0-10mb of RAM).
 
-So open Task manager and close the roblox process that only uses 0-10 mb of RAM
-
-Open the correct process in cheat engine, go to Memory View --> Tools --> Lua Engine --> Paste the script in the text box and hit Execute.
+Once you've opened the correct process in cheat engine, go to Memory View --> Tools --> Lua Engine --> Paste the script in the text box and hit Execute.
 
 # UPDATE LOG
 
