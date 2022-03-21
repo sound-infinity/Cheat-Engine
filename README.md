@@ -1,6 +1,15 @@
+# PLEASE READ
+
+To avoid conflict, you need to make sure you opened the correct roblox process (high memory usage)
+and not the secondary one only used for roblox's AC.
+
+So open Task manager and close the roblox process that only uses 0-10 mb of RAM
+
+Open the correct process in cheat engine, go to Memory View --> Tools --> Lua Engine --> Paste the script in the text box and hit Execute.
+
 # UPDATE LOG
 
-added linedefined support (and wonderfully set it to 0, by default)
+3/21/22 - Fixed a bug
 
 # WORKING AS OF 2/19/22
 
@@ -17,17 +26,11 @@ which is plainly visible, among the first couple lines.
 If you know lua, this should be easy.
 
 Everything in that function will get executed INSIDE ROBLOX.
-Now, please note this is still a work in progress and it DOES NOT SUPPORT BIG SCRIPTS YET.
+Now, please note this is still a work in progress and it DOES NOT SUPPORT BIG SCRIPTS YET
 
 
 
-# UNDETECTED CHEAT ENGINE WHEN??
-
-If you're really desparate, contact me at jayyy#8941
-
-
-
-# NOTICE
+# P.S.
 
 DONT use 'Open Cheat Table' for executing the lua script
 
