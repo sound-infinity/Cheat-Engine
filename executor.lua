@@ -19,14 +19,14 @@ function Fly()
     bg.P = 9e4
     bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
     bg.cframe = torso.CFrame
-    
+
     local bv = Instance.new("BodyVelocity", torso)
     bv.velocity = Vector3.new(0,0.1,0)
     bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-    
+
     repeat wait()
     plr.Character.Humanoid.PlatformStand = true
-    
+
     if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
         speed = speed+.5+(speed/maxspeed)
         if speed > maxspeed then
@@ -38,7 +38,7 @@ function Fly()
             speed = 0
         end
     end
-    
+
     if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
         bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
         lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
@@ -47,7 +47,7 @@ function Fly()
     else
         bv.velocity = Vector3.new(0,0.1,0)
     end
-    
+
     local tilt = -math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed);
     bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(tilt,0,0)
     until not flying
@@ -808,7 +808,7 @@ rbx.dump_function = function(f)
             end
         end
 
-        writer:writeCompressedInt(0); -- function line defined
+        writer:writeByte(0); -- function/source string id
         writer:writeByte(0); -- function/source string id
 
         writer:writeByte(0); -- line info
@@ -1247,6 +1247,7 @@ loader.start();
 if loader.loaded then
     rbx.start();
 end
+
 
 
 
