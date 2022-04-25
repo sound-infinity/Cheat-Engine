@@ -19,14 +19,9 @@ you only have to run 1 script -- executor.lua
 Go into Memory View and hit Ctrl+L or Tools --> Lua Engine
 and paste the script there.
 
-Make any modifications you want to the "rbx_main()" function in executor.lua
-which is plainly visible, among the first couple lines.
-If you know lua, this should be easy.
-
-Everything in that function will get executed INSIDE ROBLOX.
-Now, please note this is still a work in progress and it DOES NOT SUPPORT BIG SCRIPTS YET
-
-
+Make any changes you want to the FE Fly script which is in a large string, in the first couple of lines in executor.lua.
+Replace it with any script you want.
+Just nothing crazy cause I've never had a chance to finish this thing.
 
 # P.S.
 
