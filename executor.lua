@@ -113,10 +113,88 @@ load_api("api_celua.lua")();
 -- import my memory utilities
 load_api("api_util.lua")();
 
-pid = getProcessIDFromProcessName("RobloxPlayerBeta.exe");
-openProcess(pid);
+local pid = -1
+do
+    local COMMAND_TASKLIST = "tasklist /fo csv /nh"
+    ---@class TaskListRetType
+    ---@field contents string
+    ---@field lines string[]
+    ---@type fun(): TaskListRetType
+    local function doTaskListCMD()
+        local lines = {}
+        local handle = io.popen(COMMAND_TASKLIST, "r")
+        local contents = handle:read("*a")
+        handle:close()
+        for line in contents:gmatch("[^\r\n]+") do
+            table.insert(lines, line)
+        end
+        return { contents = contents, lines = lines }
+    end
 
+    ---@class TaskDetail
+    local TaskDetail = {
+        Name = 1,
+        ProcessId = 2,
+        SessionName = 3,
+        SessionNumber = 4,
+        MemoryUsage = 5,
+    }
+
+    local function getProcessListV2()
+        local taskList = doTaskListCMD()
+        local processes = {}
+        for i, lncontents in pairs(taskList.lines) do
+            local enumerated = { lncontents:match([["(.+)","(.+)","(.+)","(.+)","(.+)"]]) }
+            local details = {}
+            for name, id in pairs(TaskDetail) do
+                local value = enumerated[id]
+                if id == TaskDetail.MemoryUsage then
+                    value = value:match(".+[ ]")
+                    value = value:gsub(",", "")
+                    value = tonumber(value)
+                elseif id == TaskDetail.ProcessId then
+                    value = tonumber(value)
+                end
+                details[name] = value
+            end
+            table.insert(processes, details)
+        end
+        return processes
+    end
+
+    --- func desc
+    ---@param a TaskDetail
+    ---@param b TaskDetail
+    local function sortByMemory(a, b)
+        return a.MemoryUsage > b.MemoryUsage
+    end
+
+    local function findRoblox()
+        ---@type TaskDetail[]
+        local processes = getProcessListV2()
+        table.sort(processes, sortByMemory)
+        for _, process in pairs(processes) do
+            local name = process.Name:lower()
+            if name:match("roblox") and name:match("player") then
+                return process
+            end
+        end
+    end
+    pid = findRoblox().ProcessId
+end
+
+--- blockedWait
+local function bWait(secs)
+    assert(secs, "seconds undefined")
+    local a = os.clock()
+    while (os.clock() - a) < secs do end
+end
+
+bWait(1)
+openProcess(pid);
+bWait(1)
 util.init(pid);
+bWait(1)
 
 
 rbx = {};
