@@ -204,6 +204,8 @@ for _, task in pairs(tasklist) do
     if name:match("roblox") and name:match("player") then
         if primary_process == nil then
             primary_process = task
+        elseif primary_process.MemoryUsage > task.MemoryUsage then
+            secondary_process = task
         elseif primary_process.MemoryUsage < task.MemoryUsage then
             secondary_process = primary_process
             primary_process = task
