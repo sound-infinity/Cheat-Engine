@@ -96,6 +96,105 @@ Fly()
 
 ]]
 
+--#region preload
+-- #region TaskList
+-- #region Constants
+local TASKLIST_GLOBAL_COMMAND = [[tasklist /fo CSV /nh]]
+local TASKLIST_MATCH_COMMAND = [[tasklist /fo CSV /nh /fi "IMAGENAME eq %s*"]]
+local TASKLIST_ERROR_MESSAGE =
+    [[No tasks are running which match the specified criteria.]]
+local TASKLIST_PATTERN_NEWLINE = "[^\r\n]+"
+---#endregion
+---@class TaskDetail
+local TaskDetail = {
+    Name = 1,
+    ProcessId = 2,
+    SessionName = 3,
+    SessionNumber = 4,
+    MemoryUsage = 5
+}
+
+---@class TaskList
+local TaskList = {}
+TaskList._initialized = false
+---@type TaskDetail[]
+TaskList._collection = {}
+
+---@return TaskDetail
+function TaskList:ParseLine(line)
+    local parameters = {}
+    for segment in line:gmatch("[\"](.-)[\"]") do
+        table.insert(parameters, segment)
+    end
+    local details = {}
+    for name, id in pairs(TaskDetail) do
+        local value = parameters[id]
+        if id == TaskDetail.MemoryUsage then
+            value = value:match(".+[ ]")
+            value = value:gsub(",", "")
+            value = tonumber(value)
+        elseif id == TaskDetail.ProcessId then
+            value = tonumber(value)
+        end
+        details[name] = value
+    end
+    return details
+end
+
+---@return string[]
+function TaskList:ExtractLinesFromString(contents)
+    local lines = {}
+    for line in contents:gmatch(TASKLIST_PATTERN_NEWLINE) do
+        table.insert(lines, line)
+    end
+    return lines
+end
+
+---@param command string
+---@return string output
+function TaskList:_Execute(command)
+    assert(command:match("^tasklist"), "not a tasklist command!")
+    ---@type file*
+    local fh = assert(io.popen(command, "r"))
+    local contents = fh:read("*a")
+    fh:close()
+    return contents
+end
+
+---@param command string
+---@return TaskDetail[] tasklist
+function TaskList:_Fetch(command)
+    self._initialized = true
+    self._collection = {}
+    local contents = self:_Execute(command)
+    assert(type(contents) == "string")
+    if contents:lower():match(TASKLIST_ERROR_MESSAGE:lower()) then
+        -- error("error: failed to get list of tasks!", 0)
+        return
+    end
+    local lines = self:ExtractLinesFromString(contents)
+    for _, line in pairs(lines) do
+        table.insert(self._collection, self:ParseLine(line))
+    end
+    return self._collection
+end
+
+---@return TaskDetail[]
+function TaskList:Fetch(query)
+    assert(type(query) == "string",
+           "error: expected a string for query! e.g: roblox")
+    return self:_Fetch(TASKLIST_MATCH_COMMAND:format(query))
+end
+
+---@return TaskDetail[]
+function TaskList:FetchAll() return self:_Fetch(TASKLIST_GLOBAL_COMMAND) end
+
+---@return TaskDetail[]
+function TaskList:GetCollection() return self._collection end
+
+-- #endregion TaskList
+--#endregion
+
 
 function load_api(name)
     http = getInternet()
@@ -112,90 +211,6 @@ load_api("api_celua.lua")();
 
 -- import my memory utilities
 load_api("api_util.lua")();
-
-local pid = -1
-do
-    local COMMAND_TASKLIST = "tasklist /fo csv /nh"
-    ---@class TaskListRetType
-    ---@field contents string
-    ---@field lines string[]
-    ---@type fun(): TaskListRetType
-    local function doTaskListCMD()
-        local lines = {}
-        local handle = io.popen(COMMAND_TASKLIST, "r")
-        local contents = handle:read("*a")
-        handle:close()
-        for line in contents:gmatch("[^\r\n]+") do
-            table.insert(lines, line)
-        end
-        return { contents = contents, lines = lines }
-    end
-
-    ---@class TaskDetail
-    local TaskDetail = {
-        Name = 1,
-        ProcessId = 2,
-        SessionName = 3,
-        SessionNumber = 4,
-        MemoryUsage = 5,
-    }
-
-    local function getProcessListV2()
-        local taskList = doTaskListCMD()
-        local processes = {}
-        for i, lncontents in pairs(taskList.lines) do
-            local enumerated = { lncontents:match([["(.+)","(.+)","(.+)","(.+)","(.+)"]]) }
-            local details = {}
-            for name, id in pairs(TaskDetail) do
-                local value = enumerated[id]
-                if id == TaskDetail.MemoryUsage then
-                    value = value:match(".+[ ]")
-                    value = value:gsub(",", "")
-                    value = tonumber(value)
-                elseif id == TaskDetail.ProcessId then
-                    value = tonumber(value)
-                end
-                details[name] = value
-            end
-            table.insert(processes, details)
-        end
-        return processes
-    end
-
-    --- func desc
-    ---@param a TaskDetail
-    ---@param b TaskDetail
-    local function sortByMemory(a, b)
-        return a.MemoryUsage > b.MemoryUsage
-    end
-
-    local function findRoblox()
-        ---@type TaskDetail[]
-        local processes = getProcessListV2()
-        table.sort(processes, sortByMemory)
-        for _, process in pairs(processes) do
-            local name = process.Name:lower()
-            if name:match("roblox") and name:match("player") then
-                return process
-            end
-        end
-    end
-    pid = findRoblox().ProcessId
-end
-
---- blockedWait
-local function bWait(secs)
-    assert(secs, "seconds undefined")
-    local a = os.clock()
-    while (os.clock() - a) < secs do end
-end
-
-bWait(1)
-openProcess(pid);
-bWait(1)
-util.init(pid);
-bWait(1)
-
 
 rbx = {};
 rbx.offsets = {};
