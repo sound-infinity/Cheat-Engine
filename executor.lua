@@ -193,6 +193,28 @@ function TaskList:FetchAll() return self:_Fetch(TASKLIST_GLOBAL_COMMAND) end
 function TaskList:GetCollection() return self._collection end
 
 -- #endregion TaskList
+--#region open-process
+print("[Tasklist] Generating list of processes...")
+local tasklist = TaskList:Fetch("roblox") or error("roblox process was not found running.")
+local primary_process = nil
+local secondary_process = nil
+
+for _, task in pairs(tasklist) do
+    local name = task.Name:lower()
+    if name:match("roblox") and name:match("player") then
+        if primary_process == nil then
+            primary_process = task
+        elseif primary_process.MemoryUsage < task.MemoryUsage then
+            secondary_process = primary_process
+            primary_process = task
+        end
+    end
+end
+
+assert(primary_process, "process was not found running.") -- kinda unnecessary
+print("[Tasklist] Opening process...")
+openProcess(primary_process.ProcessId)
+--#endregion
 --#endregion
 
 
@@ -211,6 +233,8 @@ load_api("api_celua.lua")();
 
 -- import my memory utilities
 load_api("api_util.lua")();
+
+util.init(primary_process.ProcessId)
 
 rbx = {};
 rbx.offsets = {};
