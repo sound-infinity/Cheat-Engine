@@ -124,23 +124,84 @@ print("[Tasklist] Opening process...")
 openProcess(primary_process.ProcessId)
 --#endregion
 --#endregion
-
-
-function load_api(name)
-    http = getInternet()
-    local api_util = http.getURL("https://raw.githubusercontent.com/thedoomed/Cheat-Engine/master/API/"..name);
-    http.destroy()
-    return loadstring(api_util);
+--#region importer
+local Importer = {_initalized=false}
+function Importer:Init()
+    if self._initalized then
+        return
+    end
+    self._initalized = true
+    self._github_hostname = "https://raw.githubusercontent.com"
+    self._github_repo_pattern = "%s/%s"
+    self._cached = {}
 end
 
-loader = {};
+function Importer:LoadContents(contents, autoload_disabled)
+    ---@diagnostic disable-next-line
+    local lsfunction = loadstring(contents)
+    if load then
+        lsfunction = load(contents)
+    elseif loadstring then
+        lsfunction = loadstring(contents)
+    else
+        error("failed to import. loadstring nor load are defined.")
+    end
+    if autoload_disabled ~= true then
+        if type(lsfunction) == "function" then
+            ---@diagnostic disable-next-line
+            return lsfunction()
+        end        
+    end
+    return lsfunction
+end
+
+function Importer:ImportUrl(url)
+    self:Init()
+    local net = getInternet()
+    local suc, response = pcall(net.getURL, url)
+    net.destroy()
+    if suc then
+        return self:LoadContents(response)
+    else
+        print("error:", response)
+    end
+end
+
+function Importer:ImportFromRepo(repo_author, repo_name, branch)
+    self:Init()
+    local buffer = {
+        self._github_hostname, 
+        self._github_repo_pattern:format(repo_author, repo_name),
+        branch
+    }
+    return {
+        ["Import"] = function(_, pathname, cache)
+            buffer[4] = pathname
+            local fullname = table.concat(buffer, "/")
+            local cached = self._cached[fullname]
+            if cached ~= nil then
+                return cached
+            end
+            local lsfunction = self:ImportUrl(fullname)
+            if cache == true then
+                self._cached[fullname] = lsfunction
+            end
+            return lsfunction
+        end,
+    }
+end
+--#endregion
+local importer = Importer:ImportFromRepo("sound-infinity", "Cheat-Engine", "master")
+local function require(pathname)
+    pathname = pathname:gsub("[.]", "/")
+    pathname = pathname .. ".lua"
+    return importer:Import(pathname, true)
+end
+
+loader = {}
 loader.clock_start = os.clock();
-
--- import my deserializer for lua 5.3
-load_api("api_celua.lua")();
-
--- import my memory utilities
-load_api("api_util.lua")();
+require("API.api_celua")
+require("API.api_util")
 
 util.init(primary_process.ProcessId)
 
